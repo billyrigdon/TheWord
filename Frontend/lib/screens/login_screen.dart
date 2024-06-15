@@ -1,5 +1,8 @@
 import 'package:TheWord/providers/settings_provider.dart';
+import 'package:TheWord/providers/verse_provider.dart';
 import 'package:TheWord/screens/book_list.dart';
+import 'package:TheWord/screens/registration_screen.dart';
+import 'package:TheWord/shared/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -33,16 +36,24 @@ class _LoginScreenState extends State<LoginScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
       await prefs.setInt('tokenExpiry', DateTime.now().add(Duration(days: 30)).millisecondsSinceEpoch);
-      Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+      await Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+      // await Provider.of<VerseProvider>(context, listen: false).init();
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => BookListScreen()),
+        MaterialPageRoute(builder: (context) => BottomBarNavigation()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed')),
       );
     }
+  }
+
+  void _navigateToSignUp() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => RegistrationScreen()), // Ensure SignUpScreen exists
+    );
   }
 
   @override
@@ -68,6 +79,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: _login,
               child: Text('Login'),
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: TextButton(
+                onPressed: _navigateToSignUp,
+                child: Text(
+                  'Don\'t have an account?\n          Sign up here',
+                  style: TextStyle(color: Theme.of(context).primaryTextTheme.bodyMedium?.color),
+                ),
+              ),
             ),
           ],
         ),

@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:TheWord/providers/bible_provider.dart';
+import 'package:TheWord/providers/friend_provider.dart';
 import 'package:TheWord/providers/settings_provider.dart';
+import 'package:TheWord/providers/verse_provider.dart';
+import 'package:TheWord/shared/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +21,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
         ChangeNotifierProvider(create: (context) => BibleProvider()),
+        ChangeNotifierProvider(create: (_) => FriendProvider()),
+        ChangeNotifierProvider(create: (_) => VerseProvider()),
       ],
       child: BibleReaderApp(),
     ),
@@ -30,13 +35,13 @@ class BibleReaderApp extends StatelessWidget {
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
         BibleProvider bibleProvider = Provider.of<BibleProvider>(context, listen: false);
-
         bibleProvider.fetchTranslations();
 
         var themeFontColor = settings.currentThemeMode == ThemeMode.dark ? Colors.white : Colors.black;
         if (settings.currentColor != null)  themeFontColor = settings.getFontColor(settings.currentColor!);
 
         return MaterialApp(
+
           title: 'The Word',
           themeMode: settings.currentThemeMode,
           darkTheme: ThemeData(
@@ -50,6 +55,10 @@ class BibleReaderApp extends StatelessWidget {
               foregroundColor: themeFontColor,
               backgroundColor: settings.currentColor,
               titleTextStyle: TextStyle(color: themeFontColor, fontSize: 20),
+            ),
+            bottomAppBarTheme: BottomAppBarTheme(
+              surfaceTintColor: themeFontColor,
+              color: settings.currentColor,
             ),
             listTileTheme: const ListTileThemeData(
               textColor: Colors.white,
@@ -65,15 +74,20 @@ class BibleReaderApp extends StatelessWidget {
               bodyMedium: TextStyle(color: Colors.black),
             ),
             appBarTheme: AppBarTheme(
+              foregroundColor: themeFontColor,
               backgroundColor: settings.currentColor,
               titleTextStyle: TextStyle(color: themeFontColor, fontSize: 20),
+            ),
+            bottomAppBarTheme: BottomAppBarTheme(
+              surfaceTintColor: themeFontColor,
+              color: settings.currentColor,
             ),
             listTileTheme: const ListTileThemeData(
               textColor: Colors.black,
               iconColor: Colors.black,
             ),
           ),
-          home: BookListScreen(),
+          home: BottomBarNavigation(),
         );
       },
     );

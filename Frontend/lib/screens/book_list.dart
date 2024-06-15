@@ -25,7 +25,7 @@ class _BookListScreenState extends State<BookListScreen> {
   void initState() {
     super.initState();
     _loadBooks();
-    _loadSettings();
+    // _loadSettings();
   }
 
   void _loadSettings() {
@@ -77,77 +77,6 @@ class _BookListScreenState extends State<BookListScreen> {
     Color cardColor = isDarkMode ? Colors.black : Colors.white;
     SettingsProvider settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        actions: [
-          // If user not logged in:
-          if (!settingsProvider.isLoggedIn)
-          IconButton(
-            icon: const Icon(Icons.login),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-          ),
-          if (!settingsProvider.isLoggedIn)
-          IconButton(
-            icon: const Icon(Icons.app_registration),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegistrationScreen()),
-              );
-            },
-          ),
-          if (settingsProvider.isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.app_registration),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PublicVersesScreen()),
-                );
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.sticky_note_2),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SavedVersesScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ChatScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
-              );
-            },
-          ),
-          if (settingsProvider.isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                settingsProvider.logout();
-              },
-            ),
-        ],
-        title: const Text('The Word'),
-      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

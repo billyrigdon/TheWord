@@ -52,9 +52,9 @@ class ChapterListScreenState extends State<ChapterListScreen> {
     List<dynamic> realChapters = getRealChapters(chapters);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.bookName} Chapters'),
-      ),
+      // appBar: AppBar(
+      //   title: Text('${widget.bookName} Chapters'),
+      // ),
       body: realChapters.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
