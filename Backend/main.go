@@ -675,30 +675,12 @@ func getPublicVerses(c *gin.Context) {
 		pageSizeInt = 10
 	}
 
-	var friends []uint
-
-	// Retrieve friends who have accepted the user's friend request
-	db.Table("friends").
-		Where("user_id = ? AND status = 'accepted'", userID).
-		Pluck("friend_id", &friends)
-
-	// Retrieve friends who have accepted the user's friend request or the user has accepted
-	db.Table("friends").
-		Where("friend_id = ? AND status = 'accepted'", userID).
-		Pluck("user_id", &friends)
-
-	// Append the user's own ID to include their verses
-	friends = append(friends, userID)
-
-	// Remove duplicate IDs
-	friends = unique(friends)
-
 	var verses []UserVerse
 	offset := (pageInt - 1) * pageSizeInt
 
-	// Fetch verses from the user and friends
+	// Fetch verses from all users with public profiles
 	err = db.Joins("JOIN users ON users.user_id = user_verses.user_id").
-		Where("user_verses.note != '' AND user_verses.user_id IN (?)", friends).
+		Where("users.public_profile = true AND user_verses.note != ''").
 		Offset(offset).
 		Limit(pageSizeInt).
 		Find(&verses).Error

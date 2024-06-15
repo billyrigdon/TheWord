@@ -342,7 +342,7 @@ class PublicVersesScreen extends StatelessWidget {
           return;
         },
         child: verseProvider.publicVerses.isEmpty
-            ? const CircularProgressIndicator()
+            ? const Text('No public verses found')
             : ListView.builder(
             itemCount: verseProvider.publicVerses.length,
             itemBuilder: (context, index) {
