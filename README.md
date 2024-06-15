@@ -14,7 +14,7 @@ Welcome to The Word, your companion in Bible study, meticulously crafted in Flut
 ## Features
 
 ### Multiple Bible Translations
-Explore various Bible versions including ESV, BSB, and more. Compare translations to deepen your understanding of scripture.
+Over 2400 Bible translations in over 1600 languages. Compare translations to deepen your understanding of scripture.
 
 ### AI-Powered Insights
 Harness the power of Gemini AI for contextual explanations, historical backgrounds, and personalized reading recommendations. Dive deeper into the Word with intelligent insights at your fingertips.
@@ -29,7 +29,8 @@ Enjoy a seamless user experience with our intuitive design. Navigate effortlessl
    ![Home Screen](./screenshots/book_list.png)
    ![Reading Interface](./screenshots/reader.png)
    ![Saved Verses Interface](./screenshots/saved_verses.png)
-   *Description*: Immerse yourself in a serene reading experience with our distraction-free interface, designed to highlight key passages and encourage personal reflection through customizable notes and highlights.
+   ![Comments Interface](./screenshots/comments.png)
+   *Description*: Read the Bible and share your favorite Bible passages with your friends.
 
 ### Customizable Interface
 2. **Customizable Interface**
