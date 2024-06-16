@@ -41,6 +41,13 @@ dependencies:
   shared_preferences: ^2.2.3
   flutter_dotenv: ^5.1.0
   flutter_markdown: ^0.7.2
+  flutter_tts: ^4.0.2
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png" # Path to your app icon
 
 dev_dependencies:
   flutter_test:

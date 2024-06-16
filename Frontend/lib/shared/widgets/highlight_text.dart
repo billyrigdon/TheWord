@@ -6,11 +6,13 @@ import '../../providers/verse_provider.dart';
 class SelectableTextHighlight extends StatefulWidget {
   final List<Map<String, dynamic>> verses;
   final TextStyle style;
+  int? currentVerseIndex;
 
-  const SelectableTextHighlight({
+  SelectableTextHighlight({
     Key? key,
     required this.verses,
     required this.style,
+    this.currentVerseIndex
   }) : super(key: key);
 
   @override
@@ -43,6 +45,7 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final verseProvider = Provider.of<VerseProvider>(context);
 
+
     return ListView.builder(
       itemCount: widget.verses.length,
       itemBuilder: (context, index) {
@@ -68,8 +71,8 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
                 Text(
                   verseText,
                   style: isHighlighted
-                      ? TextStyle(fontSize: 16, color: settingsProvider.getFontColor(settingsProvider.highlightColor!))
-                      : widget.style,
+                      ? TextStyle(fontSize: 16, color: settingsProvider.getFontColor(settingsProvider.highlightColor!), fontWeight: widget.currentVerseIndex == index ? FontWeight.bold : FontWeight.normal)
+                      : TextStyle(fontSize: 16, fontWeight: widget.currentVerseIndex == index ? FontWeight.bold : FontWeight.normal),
                 ),
               ],
             ),

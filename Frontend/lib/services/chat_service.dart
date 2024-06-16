@@ -51,5 +51,8 @@ class ChatService {
     "${message['role'] == 'user' ? 'You' : 'Archie'}: ${message['message']}")
         .join('\n');
   }
+
+
+
 }
 
