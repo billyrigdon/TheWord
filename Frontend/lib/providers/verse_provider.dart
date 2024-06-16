@@ -198,7 +198,7 @@ class VerseProvider with ChangeNotifier {
     if (response.statusCode == 200) {
       savedVerses.removeWhere((verse) => verse['UserVerseID'] == int.parse(userVerseId));
       fetchSavedVerses();
-      fetchPublicVerses();
+      fetchPublicVerses(reset: true);
       notifyListeners();
     } else {
       print('Failed to unsave verse: ${response.body}');

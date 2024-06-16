@@ -19,10 +19,9 @@ class ChatScreenState extends State<ChatScreen> {
     });
 
     String message = _controller.text.trim();
-    if (message.isEmpty) return; // Do not send empty messages
+    if (message.isEmpty) return;
     _controller.clear();
 
-    // Add the user message to the display list
     setState(() {
       _messages.add('**You**: $message');
     });
@@ -30,7 +29,6 @@ class ChatScreenState extends State<ChatScreen> {
     try {
       String response = await _chatService.getResponse(message);
 
-      // Add only the cleaned AI response to the display list
       setState(() {
         _messages.add('**Archie**: $response');
       });
@@ -48,9 +46,6 @@ class ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Ask Archie'),
-      // ),
       body: Column(
         children: [
           Expanded(
@@ -112,114 +107,3 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 }
-
-
-//
-//
-// import 'package:flutter/material.dart';
-// import 'package:flutter_markdown/flutter_markdown.dart';
-// import '../services/chat_service.dart';
-//
-// class ChatScreen extends StatefulWidget {
-//   @override
-//   ChatScreenState createState() => ChatScreenState();
-// }
-//
-// class ChatScreenState extends State<ChatScreen> {
-//   final TextEditingController _controller = TextEditingController();
-//   final List<String> _messages = [];
-//   final ChatService _chatService = ChatService();
-//   bool _isLoading = false;
-//
-//   void _sendMessage() async {
-//     setState(() {
-//       _isLoading = true;
-//     });
-//
-//     String message = _controller.text.trim();
-//     if (message.isEmpty) return; // Do not send empty messages
-//     _controller.clear();
-//
-//     // Add the user message to the display list
-//     setState(() {
-//       _messages.add('**You**: $message');
-//     });
-//
-//     try {
-//       String response = await _chatService.getResponse(message);
-//
-//       // Add only the cleaned AI response to the display list
-//       setState(() {
-//         _messages.add('**Archie**: $response');
-//       });
-//     } catch (err) {
-//       setState(() {
-//         _messages.add("**Error**: SOMETHING WENT WRONG. PLEASE TRY AGAIN.");
-//       });
-//     } finally {
-//       setState(() {
-//         _isLoading = false;
-//       });
-//     }
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Ask Archie'),
-//       ),
-//       body: Column(
-//         children: [
-//           Expanded(
-//             child: ListView.builder(
-//               itemCount: _messages.length,
-//               itemBuilder: (context, index) {
-//                 return Padding(
-//                   padding: const EdgeInsets.all(8.0),
-//                   child: MarkdownBody(
-//                     data: _messages[index],
-//                     styleSheet: MarkdownStyleSheet(
-//                       p: const TextStyle(fontSize: 16),
-//                       strong: const TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                 );
-//               },
-//             ),
-//           ),
-//           if (_isLoading)
-//             const Padding(
-//               padding: EdgeInsets.all(8.0),
-//               child: CircularProgressIndicator(),
-//             ),
-//           Padding(
-//             padding: const EdgeInsets.all(8.0),
-//             child: Row(
-//               children: [
-//                 Expanded(
-//                   child: SingleChildScrollView(
-//                     child: TextField(
-//                       controller: _controller,
-//                       decoration: const InputDecoration(
-//                         hintText: 'Ask something...',
-//                         border: OutlineInputBorder(),
-//                       ),
-//                       keyboardType: TextInputType.multiline,
-//                       maxLines: null,
-//                       textInputAction: TextInputAction.newline,
-//                     ),
-//                   ),
-//                 ),
-//                 IconButton(
-//                   icon: const Icon(Icons.send),
-//                   onPressed: _sendMessage,
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

@@ -339,7 +339,7 @@ class PublicVersesScreen extends StatelessWidget {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          return;
+          await verseProvider.fetchPublicVerses(reset: true);
         },
         child: verseProvider.publicVerses.isEmpty
             ? const Text('No public verses found')
