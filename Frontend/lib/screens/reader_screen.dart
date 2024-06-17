@@ -689,6 +689,7 @@ class ReaderScreenState extends State<ReaderScreen> {
                     final currentChapterName = widget.chapterNames[index];
                     _fetchChapterContent(currentChapterId);
                     setState(() {
+                      widget.chapterId = currentChapterId;
                       chapterName = currentChapterName;
                     });
                   },
