@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FriendProvider with ChangeNotifier {
   List<dynamic> friends = [];
   List<dynamic> suggestedFriends = [];
-  List<dynamic> friendRequests = [];
+  List<Friend> friendRequests = [];
   List<int> sentFriendRequests = [];
   bool isLoading = true;
 
@@ -16,50 +16,6 @@ class FriendProvider with ChangeNotifier {
     friendRequests = [];
     sentFriendRequests = [];
   }
-
-  // Future<void> fetchFriends() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final token = prefs.getString('token');
-  //   isLoading = true;
-  //   notifyListeners();
-  //
-  //   final response = await http.get(
-  //     Uri.parse('http://10.0.2.2:8080/friends'),
-  //     headers: {'Authorization': 'Bearer $token'},
-  //   );
-  //   if (response.statusCode == 200) {
-  //     var responseBody = json.decode(response.body);
-  //     if (responseBody != null) {
-  //       friends = (responseBody as List<dynamic> ?? [])
-  //           .map<Friend>((data) => Friend.fromJson(data))
-  //           .toList();
-  //     }
-  //   }
-  //   isLoading = false;
-  //   notifyListeners();
-  // }
-  //
-  // Future<void> fetchSuggestedFriends() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final token = prefs.getString('token');
-  //   isLoading = true;
-  //   notifyListeners();
-  //
-  //   final response = await http.get(
-  //     Uri.parse('http://10.0.2.2:8080/friends/suggested'),
-  //     headers: {'Authorization': 'Bearer $token'},
-  //   );
-  //   if (response.statusCode == 200) {
-  //     var responseBody = json.decode(response.body);
-  //     if (responseBody != null) {
-  //       suggestedFriends = (responseBody as List<dynamic> ?? [])
-  //           .map<Friend>((data) => Friend.fromJson(data))
-  //           .toList();
-  //     }
-  //   }
-  //   isLoading = false;
-  //   notifyListeners();
-  // }
 
   Future<void> fetchFriends() async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,7 +50,6 @@ class FriendProvider with ChangeNotifier {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      print(response.body.toString());
       var responseBody = json.decode(response.body);
       if (responseBody != null) {
         suggestedFriends = (responseBody as List<dynamic>)
@@ -117,8 +72,7 @@ class FriendProvider with ChangeNotifier {
       Uri.parse('http://10.0.2.2:8080/friends/requests'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    print(response.body);
-    print(response.body.toString());
+
     if (response.statusCode == 200) {
       var responseBody = json.decode(response.body);
       friendRequests = responseBody != null ?   (responseBody as List<dynamic>)
@@ -139,8 +93,12 @@ class FriendProvider with ChangeNotifier {
     );
     if (response.statusCode == 200) {
       sentFriendRequests.add(friendId);
-      notifyListeners(); // Update the UI to reflect the change
+      notifyListeners();
       return true;
+    } else {
+      await fetchFriendRequests();
+      await fetchSuggestedFriends();
+      notifyListeners();
     }
     return false;
   }
@@ -156,7 +114,7 @@ class FriendProvider with ChangeNotifier {
       friends.removeWhere((friend) => friend.userID == friendId);
       await fetchFriends();
       await fetchSuggestedFriends();
-      notifyListeners(); // Update the UI to reflect the change
+      notifyListeners();
     }
   }
 
@@ -186,22 +144,22 @@ class FriendProvider with ChangeNotifier {
 class Friend {
   final int userID;
   final String username;
-  final int mutualFriends; // New field for mutual friends count
-  final int totalLikeCount; // New field for total like count
+  final int mutualFriends;
+  final int totalLikeCount;
 
   Friend({
     required this.userID,
     required this.username,
-    required this.mutualFriends, // Initialize new field
-    required this.totalLikeCount, // Initialize new field
+    required this.mutualFriends,
+    required this.totalLikeCount,
   });
 
   factory Friend.fromJson(Map<String, dynamic> json) {
     return Friend(
       userID: json['user_id'],
       username: json['username'],
-      mutualFriends: json['mutual_friends'] ?? 0, // Parse new field
-      totalLikeCount: json['total_like_count'] ?? 0, // Parse new field
+      mutualFriends: json['mutual_friends'] ?? 0,
+      totalLikeCount: json['total_like_count'] ?? 0,
     );
   }
 }

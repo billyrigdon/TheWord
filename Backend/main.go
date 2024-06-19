@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -128,6 +130,8 @@ func main() {
 	r.DELETE("/verses/:id", authMiddleware, deleteVerse)
 	r.POST("/verse/:id/toggle-like", authMiddleware, toggleLike)
 	r.POST("/verse/:id/comment", authMiddleware, addComment)
+	r.PUT("/verse/:id/comment/:commentID", authMiddleware, updateComment)
+	r.DELETE("/verse/:id/comment/:commentID", authMiddleware, deleteComment)
 	r.GET("/user/settings", authMiddleware, getUserSettings)
 	r.POST("/user/settings", authMiddleware, updateUserSettings)
 	r.GET("/verses/public", authMiddleware, getPublicVerses)
@@ -157,6 +161,7 @@ func getUserSettings(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
+		"user_id":          user.UserID,
 		"primary_color":    user.PrimaryColor,
 		"highlight_color":  user.HighlightColor,
 		"dark_mode":        user.DarkMode,
@@ -316,40 +321,81 @@ func listFriends(c *gin.Context) {
 	}
 
 	db.Raw(`
-		SELECT 
-			u.user_id, 
-			u.username, 
-			u.public_profile, 
-			u.primary_color, 
-			u.highlight_color, 
-			u.dark_mode, 
-			u.translation_id, 
-			u.translation_name,
-			(
-				SELECT COUNT(*) 
-				FROM friends f1
-				WHERE (
-					(f1.user_id = u.user_id AND f1.friend_id IN (
-						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
-						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
-					))
-					OR
-					(f1.friend_id = u.user_id AND f1.user_id IN (
-						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
-						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
-					))
-				)
-			) AS mutual_friends,
-			(
-				SELECT COUNT(*) 
-				FROM likes 
-				WHERE likes.user_id = u.user_id
-			) AS total_like_count
-		FROM users u
-		INNER JOIN friends f ON (f.friend_id = u.user_id AND f.user_id = ?) 
-			OR (f.user_id = u.user_id AND f.friend_id = ?)
-		WHERE f.status = 'accepted'
-	`, userID, userID, userID, userID, userID, userID, userID, userID).Scan(&friends)
+        SELECT 
+            u.user_id, 
+            u.username, 
+            u.public_profile, 
+            u.primary_color, 
+            u.highlight_color, 
+            u.dark_mode, 
+            u.translation_id, 
+            u.translation_name,
+            (
+                SELECT COUNT(DISTINCT mutual_friend_id)
+                FROM (
+                    SELECT f1.friend_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted' 
+                    AND f1.user_id = u.user_id 
+                    AND f1.friend_id IN (
+                        SELECT f2.friend_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.user_id = ?
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.user_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted' 
+                    AND f1.friend_id = u.user_id 
+                    AND f1.user_id IN (
+                        SELECT f2.friend_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.user_id = ?
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.friend_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted'
+                    AND f1.user_id = u.user_id 
+                    AND f1.friend_id IN (
+                        SELECT f2.user_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.friend_id = ?
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.user_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted'
+                    AND f1.friend_id = u.user_id 
+                    AND f1.user_id IN (
+                        SELECT f2.user_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.friend_id = ?
+                    )
+                ) AS mutual_friends
+            ) AS mutual_friends,
+            (
+                SELECT COUNT(*)
+                FROM likes
+                WHERE likes.user_id = u.user_id
+            ) AS total_like_count
+        FROM users u
+        INNER JOIN friends f ON (
+            (f.friend_id = u.user_id AND f.user_id = ? AND f.status = 'accepted')
+            OR
+            (f.user_id = u.user_id AND f.friend_id = ? AND f.status = 'accepted')
+        )
+    `, userID, userID, userID, userID, userID, userID).Scan(&friends)
 
 	c.JSON(http.StatusOK, friends)
 }
@@ -366,18 +412,19 @@ func listSuggestedFriends(c *gin.Context) {
 
 	// Retrieve all related user IDs to exclude (accepted, requested, or rejected)
 	db.Raw(`
-		SELECT DISTINCT user_id 
-		FROM (
-			SELECT friend_id AS user_id 
-			FROM friends 
-			WHERE user_id = ? AND status IN ('accepted', 'requested', 'rejected')
-			UNION
-			SELECT user_id 
-			FROM friends 
-			WHERE friend_id = ? AND status IN ('accepted', 'requested', 'rejected')
-		) AS related_users
-	`, userIDUint, userIDUint).Scan(&excludedUserIDs)
+        SELECT DISTINCT user_id 
+        FROM (
+            SELECT friend_id AS user_id 
+            FROM friends 
+            WHERE user_id = $1 AND status IN ('accepted', 'requested', 'rejected')
+            UNION
+            SELECT user_id 
+            FROM friends 
+            WHERE friend_id = $1 AND status IN ('accepted', 'requested', 'rejected')
+        ) AS related_users
+    `, userIDUint).Scan(&excludedUserIDs)
 
+	// Add the current user ID to the exclusion list
 	excludedUserIDs = append(excludedUserIDs, userIDUint)
 
 	var suggestedFriends []struct {
@@ -394,39 +441,80 @@ func listSuggestedFriends(c *gin.Context) {
 	}
 
 	db.Raw(`
-		SELECT 
-			u.user_id, 
-			u.username, 
-			u.public_profile, 
-			u.primary_color, 
-			u.highlight_color, 
-			u.dark_mode, 
-			u.translation_id, 
-			u.translation_name,
-			(
-				SELECT COUNT(*) 
-				FROM friends f1
-				WHERE (
-					(f1.user_id = u.user_id AND f1.friend_id IN (
-						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
-						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
-					))
-					OR
-					(f1.friend_id = u.user_id AND f1.user_id IN (
-						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
-						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
-					))
-				)
-			) AS mutual_friends,
-			(
-				SELECT COUNT(*) 
-				FROM likes 
-				WHERE likes.user_id = u.user_id
-			) AS total_like_count
-		FROM users u
-		WHERE u.public_profile = true 
-			AND u.user_id NOT IN (?)
-	`, userIDUint, userIDUint, userIDUint, userIDUint, userIDUint, userIDUint, excludedUserIDs).Scan(&suggestedFriends)
+        SELECT 
+            u.user_id, 
+            u.username, 
+            u.public_profile, 
+            u.primary_color, 
+            u.highlight_color, 
+            u.dark_mode, 
+            u.translation_id, 
+            u.translation_name,
+            (
+                SELECT COUNT(DISTINCT mutual_friend_id)
+                FROM (
+                    SELECT f1.friend_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted' 
+                    AND f1.user_id = u.user_id 
+                    AND f1.friend_id IN (
+                        SELECT f2.friend_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.user_id = $1
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.user_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted' 
+                    AND f1.friend_id = u.user_id 
+                    AND f1.user_id IN (
+                        SELECT f2.friend_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.user_id = $1
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.friend_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted'
+                    AND f1.user_id = u.user_id 
+                    AND f1.friend_id IN (
+                        SELECT f2.user_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.friend_id = $1
+                    )
+                    
+                    UNION
+                    
+                    SELECT f1.user_id AS mutual_friend_id
+                    FROM friends f1
+                    WHERE f1.status = 'accepted'
+                    AND f1.friend_id = u.user_id 
+                    AND f1.user_id IN (
+                        SELECT f2.user_id 
+                        FROM friends f2
+                        WHERE f2.status = 'accepted'
+                        AND f2.friend_id = $1
+                    )
+                ) AS mutual_friends
+            ) AS mutual_friends,
+            (
+                SELECT COUNT(*)
+                FROM likes
+                WHERE likes.user_id = u.user_id
+            ) AS total_like_count
+        FROM users u
+        WHERE u.public_profile = true 
+            AND u.user_id NOT IN (
+                SELECT unnest($2::int[])
+            )
+    `, userIDUint, pq.Array(excludedUserIDs)).Scan(&suggestedFriends)
 
 	c.JSON(http.StatusOK, suggestedFriends)
 }
@@ -547,7 +635,9 @@ func loginUser(c *gin.Context) {
 	}
 
 	var user User
-	if err := db.First(&user, "email = ?", req.Email).Error; err != nil {
+	// Convert the email to lowercase for case-insensitive comparison
+	emailLower := strings.ToLower(req.Email)
+	if err := db.First(&user, "LOWER(email) = ?", emailLower).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
@@ -848,18 +938,75 @@ func addComment(c *gin.Context) {
 	c.JSON(http.StatusOK, comment)
 }
 
+func updateComment(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	commentID := c.Param("commentID")
+
+	var existingComment Comment
+	if err := db.First(&existingComment, "comment_id = ? AND user_id = ?", commentID, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
+		return
+	}
+
+	var updatedComment Comment
+	if err := c.ShouldBindJSON(&updatedComment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	existingComment.Content = updatedComment.Content
+	db.Save(&existingComment)
+
+	c.JSON(http.StatusOK, existingComment)
+}
+
+func deleteComment(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	commentID := c.Param("commentID")
+
+	var existingComment Comment
+	if err := db.First(&existingComment, "comment_id = ? AND user_id = ?", commentID, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
+		return
+	}
+
+	// Anonymize and redact the comment
+	existingComment.Username = "redacted"
+	existingComment.Content = ""
+	existingComment.UserID = 0
+
+	db.Save(&existingComment)
+	c.JSON(http.StatusOK, gin.H{"message": "Comment deleted and anonymized"})
+}
+
 func getComments(c *gin.Context) {
 	userVerseID := c.Param("id")
 
 	var comments []Comment
-	err := db.Joins("JOIN users ON users.user_id = comments.user_id").
-		Where("comments.user_verse_id = ?", userVerseID).
-		Select("comments.*, users.username AS username").
-		Find(&comments).Error
+
+	// Use left join to include comments with userID = 0
+	err := db.Raw(`
+		SELECT comments.*, 
+		       CASE 
+		         WHEN users.user_id IS NULL THEN 'redacted'
+		         ELSE users.username 
+		       END AS username 
+		FROM comments
+		LEFT JOIN users ON users.user_id = comments.user_id
+		WHERE comments.user_verse_id = ?`, userVerseID).Scan(&comments).Error
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Handle case where comment's user_id is 0 by setting username to 'redacted'
+	for i, comment := range comments {
+		if comment.UserID == 0 {
+			comments[i].Username = "redacted"
+		}
+	}
+
 	c.JSON(http.StatusOK, comments)
 }
 

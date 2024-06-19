@@ -361,7 +361,7 @@ class PublicVersesScreen extends StatelessWidget {
                 onLike: () => verseProvider.toggleLike(userVerseId),
                 onComment: () => _navigateToComments(context, verse),
                 isSaved: false,
-                onSaveNote: (note) {}, // No notes for public verses
+                onSaveNote: (note) {},
               );
             },
           ),

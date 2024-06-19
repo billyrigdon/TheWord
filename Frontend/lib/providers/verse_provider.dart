@@ -96,7 +96,7 @@ class VerseProvider with ChangeNotifier {
     if (response.statusCode == 200) {
       print(response.body.toString());
       print('SUCCESS');
-      List newVerses = json.decode(response.body);
+      List newVerses = json.decode(response.body) ?? [];
       publicVerses.addAll(newVerses);
       for (var verse in newVerses) {
         int userVerseId = verse['UserVerseID'];

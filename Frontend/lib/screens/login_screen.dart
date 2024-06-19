@@ -1,6 +1,4 @@
 import 'package:TheWord/providers/settings_provider.dart';
-import 'package:TheWord/providers/verse_provider.dart';
-import 'package:TheWord/screens/book_list.dart';
 import 'package:TheWord/screens/registration_screen.dart';
 import 'package:TheWord/shared/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('token', token);
       await prefs.setInt('tokenExpiry', DateTime.now().add(Duration(days: 30)).millisecondsSinceEpoch);
       await Provider.of<SettingsProvider>(context, listen: false).loadSettings();
-      // await Provider.of<VerseProvider>(context, listen: false).init();
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => BottomBarNavigation()),
@@ -52,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _navigateToSignUp() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => RegistrationScreen()), // Ensure SignUpScreen exists
+      MaterialPageRoute(builder: (context) => RegistrationScreen()),
     );
   }
 

@@ -40,6 +40,11 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
     }
   }
 
+  bool _isNumeric(String str) {
+    if (str.isEmpty) return false;
+    return double.tryParse(str) != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
@@ -56,8 +61,10 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
         final isHighlighted = verseProvider.isVerseSaved(verseId);
         print(verseId);
         return GestureDetector(
-          onLongPress: () {
-            _toggleVerse(verseProvider, verseId, verseText);
+          onDoubleTap: () {
+            if (!_isNumeric(verseText)) {
+              _toggleVerse(verseProvider, verseId, verseText);
+            }
           },
           child: Container(
             padding: const EdgeInsets.all(8.0),
@@ -68,7 +75,7 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                SelectableText(
                   verseText,
                   style: isHighlighted
                       ? TextStyle(fontSize: 16, color: settingsProvider.getFontColor(settingsProvider.highlightColor!), fontWeight: widget.currentVerseIndex == index ? FontWeight.bold : FontWeight.normal)

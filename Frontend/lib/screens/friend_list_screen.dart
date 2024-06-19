@@ -198,7 +198,7 @@ class FriendListScreen extends StatelessWidget {
                 friendProvider.suggestedFriends[index];
                 return Card(
                   color: settingsProvider.currentColor,
-                  margin: EdgeInsets.symmetric(
+                  margin: const EdgeInsets.symmetric(
                       horizontal: 10.0, vertical: 10.0),
                   elevation: 5,
                   child: Container(
@@ -249,6 +249,7 @@ class FriendListScreen extends StatelessWidget {
                                   content: Text(
                                       'Friend request sent to ${suggestedFriend.username}'),
                                 ));
+                              } else {
                               }
                             },
                             child: Text(

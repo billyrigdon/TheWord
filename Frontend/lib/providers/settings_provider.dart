@@ -112,6 +112,7 @@ class SettingsProvider with ChangeNotifier {
   ThemeMode _currentThemeMode;
   String? _currentTranslationId;
   String? _currentTranslationName;
+  int? _userId;
   bool _isLoggedIn = false;
   bool _isPublicProfile = false;
   List<dynamic> _translations = [];
@@ -121,6 +122,7 @@ class SettingsProvider with ChangeNotifier {
   SettingsProvider()
       : _currentColor = null,
         _highlightColor = null,
+        _userId = null,
         _currentThemeMode = ThemeMode.dark,
         _currentTranslationId = 'bba9f40183526463-01',
         _currentTranslationName = 'Berean Standard Bible' {
@@ -128,6 +130,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   MaterialColor? get currentColor => _currentColor;
+  int? get userId => _userId;
   MaterialColor? get highlightColor => _highlightColor;
   ThemeMode get currentThemeMode => _currentThemeMode;
   String? get currentTranslationId => _currentTranslationId;
@@ -173,6 +176,7 @@ class SettingsProvider with ChangeNotifier {
       _highlightColor = _parseColor(settings['highlight_color']);
       _currentThemeMode = settings['dark_mode'] ? ThemeMode.dark : ThemeMode.light;
       _isPublicProfile = settings['public_profile'];
+      _userId = settings['user_id'];
     }
     notifyListeners();
   }

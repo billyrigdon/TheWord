@@ -494,7 +494,6 @@ class ReaderScreenState extends State<ReaderScreen> {
       isLoading = true;
     });
 
-    // Force fetch content even if it is cached to ensure latest content
     final response = await http.get(
       Uri.parse(
           'https://api.scripture.api.bible/v1/bibles/$translationId/chapters/$chapterId?content-type=json'),
@@ -626,10 +625,9 @@ class ReaderScreenState extends State<ReaderScreen> {
     _readVerse(currentVerseIndex);
   }
 
-  // Method to summarize chapter or highlighted verses
   void _summarizeContent({bool entireChapter = true}) async {
     setState(() {
-      isSummaryLoading = true; // Show loading indicator
+      isSummaryLoading = true;
     });
 
     String content;
@@ -640,7 +638,7 @@ class ReaderScreenState extends State<ReaderScreen> {
     String summary = await chatService.getResponse("Summarize and provide context and interpretations for the following content: $content");
 
     setState(() {
-      isSummaryLoading = false; // Hide loading indicator
+      isSummaryLoading = false;
     });
 
     showDialog(
@@ -729,10 +727,10 @@ class ReaderScreenState extends State<ReaderScreen> {
                 ),
             ],
           ),
-          if (isSummaryLoading) // Show loading indicator when summary is being generated
+          if (isSummaryLoading)
             Container(
               color: Colors.black54,
-              child: Center(
+              child: const Center(
                 child: CircularProgressIndicator(),
               ),
             ),
@@ -750,7 +748,7 @@ class SummaryModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Summary'),
+      title: const Text('Summary'),
       content: Container(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -760,7 +758,7 @@ class SummaryModal extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('Close'),
+          child: const Text('Close'),
         ),
       ],
     );

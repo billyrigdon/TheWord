@@ -32,7 +32,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     await friendProvider.fetchSuggestedFriends();
     await friendProvider.fetchFriendRequests();
     setState(() {
-      this.friendRequests = friendProvider.friendRequests;
+      friendRequests = friendProvider.friendRequests;
       isInited = true;
     });
   }
@@ -53,7 +53,10 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
 
     // Get current color from settings
     MaterialColor? currentColor = settingsProvider.currentColor;
-
+    Color? fontColor = Colors.white;
+    if (currentColor != null) {
+      fontColor = settingsProvider.getFontColor(currentColor!);
+    }
     // Define the screens associated with each index
     List<Widget> _screens = [
       BookListScreen(),
@@ -75,6 +78,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
           actions: [
             if (!settingsProvider.isLoggedIn)
               IconButton(
+                color: fontColor,
                 icon: const Icon(Icons.login),
                 onPressed: () {
                   Navigator.push(
@@ -85,6 +89,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
               ),
             if (!settingsProvider.isLoggedIn)
               IconButton(
+                color: fontColor,
                 icon: const Icon(Icons.app_registration),
                 onPressed: () {
                   Navigator.push(
@@ -95,6 +100,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
               ),
             if (settingsProvider.isLoggedIn)
               IconButton(
+                color: fontColor,
                 icon: Stack(
                   children: [
                     const Icon(Icons.notifications),
@@ -136,6 +142,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 },
               ),
             IconButton(
+              color: fontColor,
               icon: const Icon(Icons.settings),
               onPressed: () {
                 Navigator.push(
@@ -146,6 +153,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
             ),
             if (settingsProvider.isLoggedIn)
               IconButton(
+                color: fontColor,
                 icon: const Icon(Icons.logout),
                 onPressed: () {
                   isInited = false;
@@ -175,25 +183,25 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 _currentIndex = index;
               });
             },
-            items: const [
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.book),
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.book, color: fontColor,),
                 label: 'Bible',
               ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.explore),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.explore, color: fontColor,),
                   label: 'Explore',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home, color: fontColor,),
                   label: 'My Home',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.group),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.group, color: fontColor,),
                   label: 'Friends',
                 ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.chat),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat, color: fontColor,),
                 label: 'Ask Archie',
               ),
             ],

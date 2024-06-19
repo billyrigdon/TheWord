@@ -4,25 +4,57 @@ import '../providers/bible_provider.dart';
 import '../providers/settings_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
-  final List<MaterialColor> colors = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.yellow,
-  ];
+  // Function to create a muted MaterialColor
+  MaterialColor createMutedMaterialColor(Color color) {
+    return MaterialColor(
+      color.value,
+      <int, Color>{
+        50: adjustColor(color, 0.9),
+        100: adjustColor(color, 0.8),
+        200: adjustColor(color, 0.7),
+        300: adjustColor(color, 0.6),
+        400: adjustColor(color, 0.5),
+        500: adjustColor(color, 0.4),
+        600: adjustColor(color, 0.3),
+        700: adjustColor(color, 0.2),
+        800: adjustColor(color, 0.1),
+        900: adjustColor(color, 0.05),
+      },
+    );
+  }
+
+// Function to adjust the brightness of a color
+  Color adjustColor(Color color, double factor) {
+    return Color.fromRGBO(
+      (color.red * factor).toInt(),
+      (color.green * factor).toInt(),
+      (color.blue * factor).toInt(),
+      1,
+    );
+  }
+
+  List<MaterialColor> colors = [];
+
 
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final bibleProvider = Provider.of<BibleProvider>(context);
+
+    colors = [
+      createMutedMaterialColor(Colors.red),
+      createMutedMaterialColor(Colors.pink),
+      createMutedMaterialColor(Colors.purple),
+      createMutedMaterialColor(Colors.deepPurple),
+      createMutedMaterialColor(Colors.indigo),
+      createMutedMaterialColor(Colors.blue),
+      createMutedMaterialColor(Colors.cyan),
+      createMutedMaterialColor(Colors.teal),
+      createMutedMaterialColor(Colors.green),
+      createMutedMaterialColor(Colors.lightGreen),
+      createMutedMaterialColor(Colors.yellow),
+      createMutedMaterialColor(Colors.orange),
+    ];
 
     return Scaffold(
       appBar: AppBar(
