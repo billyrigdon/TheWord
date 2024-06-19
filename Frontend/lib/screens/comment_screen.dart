@@ -323,10 +323,17 @@ class CommentsScreenState extends State<CommentsScreen> {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      setState(() {
-        comments = json.decode(response.body);
+      if (response.body != null) {
+        setState(() {
+        comments = json.decode(response.body) ?? [];
         isLoading = false;
       });
+      } else {
+        setState(() {
+          comments = [];
+          isLoading = false;
+        });
+      }
     } else {
       setState(() {
         isLoading = false;
