@@ -28,19 +28,25 @@ Enjoy a seamless user experience with our intuitive design. Navigate effortlessl
 1. **Bible Reader**
    ![Home Screen](./screenshots/book_list.png)
    ![Reading Interface](./screenshots/reader.png)
-   ![Saved Verses Interface](./screenshots/saved_verses.png)
-   ![Comments Interface](./screenshots/comments.png)
-   *Description*: Read the Bible and share your favorite Bible passages with your friends.
+   *Description*: Read your Bible, highlight and save verses, or hear it read to you with our easy to use reading interface 
+
+### Social Platform
+2.**Social Platform**
+    ![Explore Interface](./screenshots/explore.png)
+    ![Comments Interface](./screenshots/comments.png)
+    ![Friends Interface](./screenshots/friends.png)
+   *Description*: Share your favorite Bible passages with your friends
 
 ### Customizable Interface
-2. **Customizable Interface**
+3.**Customizable Interface**
    ![Settings Interface](./screenshots/settings.png)
    *Description*: Tailor your reading experience with flexible settings that cater to your preferences, ensuring a personalized and comfortable journey through scripture.
 
 
 ### AI Interaction
-3. **AI Interaction**
-   ![AI Interaction](./screenshots/ask_archie.png)
+4.**AI Interaction**
+    ![AI Interaction](./screenshots/ask_archie.png)
+    ![Summary Interface](./screenshots/chat_summary.png)
    *Description*: Engage with Gemini AI for insightful explanations, historical context, and personalized recommendations tailored to enhance your understanding and deepen your connection with scripture.
 
 

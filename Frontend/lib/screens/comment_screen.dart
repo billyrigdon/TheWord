@@ -37,7 +37,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comments'),
+      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comments'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -58,7 +58,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/likes'),
+      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/likes'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -75,7 +75,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/toggle-like'),
+      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/toggle-like'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -90,7 +90,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
     final response = await http.post(
       Uri.parse(
-          'http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comment${parentCommentID != null ? "?parentCommentID=$parentCommentID" : ""}'),
+          'http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comment${parentCommentID != null ? "?parentCommentID=$parentCommentID" : ""}'),
       headers: {'Authorization': 'Bearer $token'},
       body: json.encode({'content': content}),
     );
@@ -150,11 +150,17 @@ class CommentsScreenState extends State<CommentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
               children: [
                 Text(
+                  verse['Content'], // Display the note
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                SizedBox(height: 16),
+                Text(
                   verse['Note'], // Display the note
                   textAlign: TextAlign.left,
                   style: TextStyle(fontSize: 16.0),
                 ),
-                SizedBox(height: 10), // Space between note and buttons
+                SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end, // Align buttons to the right
                   children: [

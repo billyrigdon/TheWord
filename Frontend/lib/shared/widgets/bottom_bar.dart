@@ -21,22 +21,38 @@ class BottomBarNavigation extends StatefulWidget {
 class _BottomBarNavigationState extends State<BottomBarNavigation> {
   int _currentIndex = 0;
   bool isInited = false;
+  late SettingsProvider settingsProvider;
+  late FriendProvider friendProvider;
+  late VerseProvider verseProvider;
+  List<dynamic> friendRequests = [];
+
+  Future<void> init() async {
+    await verseProvider.init();
+    await friendProvider.fetchFriends();
+    await friendProvider.fetchSuggestedFriends();
+    await friendProvider.fetchFriendRequests();
+    setState(() {
+      this.friendRequests = friendProvider.friendRequests;
+      isInited = true;
+    });
+  }
+
+  @override void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = Provider.of<SettingsProvider>(context);
-    FriendProvider friendProvider = Provider.of<FriendProvider>(context, listen: false);
-    VerseProvider verseProvider = Provider.of<VerseProvider>(context, listen: false);
+    settingsProvider = Provider.of<SettingsProvider>(context);
+    friendProvider = Provider.of<FriendProvider>(context, listen: false);
+    verseProvider = Provider.of<VerseProvider>(context, listen: false);
 
     if (settingsProvider.isLoggedIn && !isInited) {
-      verseProvider.init();
-      friendProvider.fetchFriends();
-      friendProvider.fetchSuggestedFriends();
-      friendProvider.fetchFriendRequests();
-      isInited = true;
+      this.init();
     }
 
     // Get current color from settings
-    MaterialColor currentColor = settingsProvider.currentColor!;
+    MaterialColor? currentColor = settingsProvider.currentColor;
 
     // Define the screens associated with each index
     List<Widget> _screens = [
@@ -82,7 +98,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 icon: Stack(
                   children: [
                     const Icon(Icons.notifications),
-                    if (friendProvider.friendRequests.isNotEmpty)
+                    if (friendRequests.isNotEmpty)
                       Positioned(
                         right: 0,
                         child: Container(
@@ -96,7 +112,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                             minHeight: 12,
                           ),
                           child: Text(
-                            '${friendProvider.friendRequests.length}',
+                            '${friendRequests.length}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 8,
@@ -108,6 +124,9 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                   ],
                 ),
                 onPressed: () {
+                  setState(() {
+                    this.friendRequests = [];
+                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -178,8 +197,8 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 label: 'Ask Archie',
               ),
             ],
-            selectedItemColor: _getContrastingTextColor(currentColor),
-            unselectedItemColor: _getContrastingTextColor(currentColor).withOpacity(0.6),
+            selectedItemColor: _getContrastingTextColor(currentColor ?? createMaterialColor(Colors.black)),
+            unselectedItemColor: _getContrastingTextColor(currentColor ?? createMaterialColor(Colors.black)).withOpacity(0.6),
             showUnselectedLabels: true,
           ),
         )
@@ -196,4 +215,26 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
         (backgroundColor.blue * 114)) ~/ 1000; // Integer division
     return brightnessValue > 128 ? Colors.black : Colors.white;
   }
+
+  MaterialColor createMaterialColor(Color color) {
+    final strengths = <double>[.05];
+    final swatch = <int, Color>{};
+
+    final r = color.red, g = color.green, b = color.blue;
+
+    for (int i = 1; i < 10; i++) {
+      strengths.add(0.1 * i);
+    }
+    for (var strength in strengths) {
+      final double ds = 0.5 - strength;
+      swatch[(strength * 1000).round()] = Color.fromRGBO(
+        r + ((ds < 0 ? r : (255 - r)) * ds).round(),
+        g + ((ds < 0 ? g : (255 - g)) * ds).round(),
+        b + ((ds < 0 ? b : (255 - b)) * ds).round(),
+        1,
+      );
+    }
+    return MaterialColor(color.value, swatch);
+  }
+  
 }

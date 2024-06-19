@@ -25,7 +25,6 @@ class _BookListScreenState extends State<BookListScreen> {
   void initState() {
     super.initState();
     _loadBooks();
-    // _loadSettings();
   }
 
   void _loadSettings() {
@@ -158,13 +157,13 @@ class _BookListScreenState extends State<BookListScreen> {
                               child: Container(
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor,
+                                  color: isDarkMode ? Color(0xFF111111) : Color(0xFFF2F2F2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   chapter['number'].toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

@@ -76,7 +76,7 @@ class ChatScreenState extends State<ChatScreen> {
               children: [
                 Expanded(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
+                    constraints: const BoxConstraints(
                       maxHeight: 150.0, // Maximum height for the TextField
                     ),
                     child: SingleChildScrollView(

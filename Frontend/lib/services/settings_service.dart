@@ -8,7 +8,7 @@ class SettingsService {
   final String apiKey = dotenv.env['BIBLE_KEY'] ?? '';
   Future<Map<String, dynamic>?> fetchUserSettings(String token) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/user/settings'),
+      Uri.parse('http://10.0.2.2:8080/user/settings'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ class SettingsService {
       'translation_name': translationName,
     });
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/user/settings'),
+      Uri.parse('http://10.0.2.2:8080/user/settings'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

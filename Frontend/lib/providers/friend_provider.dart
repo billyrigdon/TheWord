@@ -17,6 +17,50 @@ class FriendProvider with ChangeNotifier {
     sentFriendRequests = [];
   }
 
+  // Future<void> fetchFriends() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('token');
+  //   isLoading = true;
+  //   notifyListeners();
+  //
+  //   final response = await http.get(
+  //     Uri.parse('http://10.0.2.2:8080/friends'),
+  //     headers: {'Authorization': 'Bearer $token'},
+  //   );
+  //   if (response.statusCode == 200) {
+  //     var responseBody = json.decode(response.body);
+  //     if (responseBody != null) {
+  //       friends = (responseBody as List<dynamic> ?? [])
+  //           .map<Friend>((data) => Friend.fromJson(data))
+  //           .toList();
+  //     }
+  //   }
+  //   isLoading = false;
+  //   notifyListeners();
+  // }
+  //
+  // Future<void> fetchSuggestedFriends() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('token');
+  //   isLoading = true;
+  //   notifyListeners();
+  //
+  //   final response = await http.get(
+  //     Uri.parse('http://10.0.2.2:8080/friends/suggested'),
+  //     headers: {'Authorization': 'Bearer $token'},
+  //   );
+  //   if (response.statusCode == 200) {
+  //     var responseBody = json.decode(response.body);
+  //     if (responseBody != null) {
+  //       suggestedFriends = (responseBody as List<dynamic> ?? [])
+  //           .map<Friend>((data) => Friend.fromJson(data))
+  //           .toList();
+  //     }
+  //   }
+  //   isLoading = false;
+  //   notifyListeners();
+  // }
+
   Future<void> fetchFriends() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -24,13 +68,13 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends'),
+      Uri.parse('http://10.0.2.2:8080/friends'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       var responseBody = json.decode(response.body);
       if (responseBody != null) {
-        friends = (responseBody as List<dynamic> ?? [])
+        friends = (responseBody as List<dynamic>)
             .map<Friend>((data) => Friend.fromJson(data))
             .toList();
       }
@@ -46,13 +90,14 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends/suggested'),
+      Uri.parse('http://10.0.2.2:8080/friends/suggested'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
+      print(response.body.toString());
       var responseBody = json.decode(response.body);
       if (responseBody != null) {
-        suggestedFriends = (responseBody as List<dynamic> ?? [])
+        suggestedFriends = (responseBody as List<dynamic>)
             .map<Friend>((data) => Friend.fromJson(data))
             .toList();
       }
@@ -61,6 +106,7 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
   }
 
+
   Future<void> fetchFriendRequests() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -68,9 +114,11 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends/requests'),
+      Uri.parse('http://10.0.2.2:8080/friends/requests'),
       headers: {'Authorization': 'Bearer $token'},
     );
+    print(response.body);
+    print(response.body.toString());
     if (response.statusCode == 200) {
       var responseBody = json.decode(response.body);
       friendRequests = responseBody != null ?   (responseBody as List<dynamic>)
@@ -86,7 +134,7 @@ class FriendProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/friends/$friendId'),
+      Uri.parse('http://10.0.2.2:8080/friends/$friendId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -101,7 +149,7 @@ class FriendProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/friends/$friendId'),
+      Uri.parse('http://10.0.2.2:8080/friends/$friendId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -116,7 +164,7 @@ class FriendProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/friends/requests/$userId/respond'),
+      Uri.parse('http://10.0.2.2:8080/friends/requests/$userId/respond'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -138,15 +186,25 @@ class FriendProvider with ChangeNotifier {
 class Friend {
   final int userID;
   final String username;
+  final int mutualFriends; // New field for mutual friends count
+  final int totalLikeCount; // New field for total like count
 
-  Friend({required this.userID, required this.username});
+  Friend({
+    required this.userID,
+    required this.username,
+    required this.mutualFriends, // Initialize new field
+    required this.totalLikeCount, // Initialize new field
+  });
 
   factory Friend.fromJson(Map<String, dynamic> json) {
     return Friend(
       userID: json['user_id'],
       username: json['username'],
+      mutualFriends: json['mutual_friends'] ?? 0, // Parse new field
+      totalLikeCount: json['total_like_count'] ?? 0, // Parse new field
     );
   }
 }
+
 
 

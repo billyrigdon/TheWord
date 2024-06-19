@@ -233,9 +233,9 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    // await prefs.remove('token');
-    // await prefs.remove('tokenExpiry');
     await prefs.clear();
+    _currentColor = null;
+    _highlightColor = null;
     _isLoggedIn = false;
     notifyListeners();
   }

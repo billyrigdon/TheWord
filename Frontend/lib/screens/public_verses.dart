@@ -42,7 +42,7 @@
 // //     }
 // //
 // //     final response = await http.get(Uri.parse(
-// //         'http://billyrigdon.dev:8110/verses/public?page=$currentPage&pageSize=$pageSize'));
+// //         'http://10.0.2.2:8080/verses/public?page=$currentPage&pageSize=$pageSize'));
 // //     if (response.statusCode == 200) {
 // //       List newVerses = json.decode(response.body);
 // //       setState(() {
@@ -68,7 +68,7 @@
 // //
 // //   Future<int> getLikesCount(int userVerseId) async {
 // //     final response = await http.get(
-// //         Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'));
+// //         Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'));
 // //     if (response.statusCode == 200) {
 // //       return json.decode(response.body)['likes_count'];
 // //     } else {
@@ -78,7 +78,7 @@
 // //
 // //   Future<void> toggleLike(int userVerseId) async {
 // //     final response = await http.post(
-// //       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+// //       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
 // //     );
 // //     if (response.statusCode == 200) {
 // //       int newLikesCount = await getLikesCount(userVerseId);
@@ -189,7 +189,7 @@
 //     }
 //
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verses/public?page=$currentPage&pageSize=$pageSize'),
+//       Uri.parse('http://10.0.2.2:8080/verses/public?page=$currentPage&pageSize=$pageSize'),
 //       headers: {'Authorization': 'Bearer $token'},
 //     );
 //
@@ -228,7 +228,7 @@
 //     var token = prefs.getString('token');
 //
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'),
 //       headers: {'Authorization': 'Bearer $token'},
 //     );
 //
@@ -244,7 +244,7 @@
 //     var token = prefs.getString('token');
 //
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/comments/count'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/comments/count'),
 //       headers: {'Authorization': 'Bearer $token'},
 //     );
 //
@@ -260,7 +260,7 @@
 //     var token = prefs.getString('token');
 //
 //     final response = await http.post(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
 //       headers: {'Authorization': 'Bearer $token'},
 //     );
 //
@@ -342,14 +342,18 @@ class PublicVersesScreen extends StatelessWidget {
           await verseProvider.fetchPublicVerses(reset: true);
         },
         child: verseProvider.publicVerses.isEmpty
-            ? const Text('No public verses found')
+            ? const Center(child: Text('No public verses'))
             : ListView.builder(
             itemCount: verseProvider.publicVerses.length,
             itemBuilder: (context, index) {
               final verse = verseProvider.publicVerses[index];
               int userVerseId = verse['UserVerseID'];
+
               return VerseCard(
                 verseId: verse['VerseID'],
+                isPublished: true,
+                verseContent: verse['Content'],
+                username: verse['username'],
                 note: verse['Note'] ?? 'No notes available',
                 likesCount: verseProvider.likesCount[userVerseId] ?? 0,
                 commentCount:

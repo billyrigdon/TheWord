@@ -42,6 +42,7 @@ type UserVerse struct {
 	Verse       string
 	UserID      uint
 	Note        string
+	IsPublished bool `json:"is_published"` // New field added
 }
 
 type UserResponse struct {
@@ -142,6 +143,8 @@ func main() {
 	r.GET("/friends", authMiddleware, listFriends)
 	r.GET("/friends/requests", authMiddleware, listFriendRequests)
 	r.POST("/friends/requests/:id/respond", authMiddleware, respondFriendRequest)
+	r.POST("/verse/:id/publish", authMiddleware, publishVerse)
+	r.POST("/verse/:id/unpublish", authMiddleware, unpublishVerse)
 
 	r.Run()
 }
@@ -221,10 +224,10 @@ func createAdminUser() {
 		return
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("adminpassword"), bcrypt.DefaultCost)
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("hackerman"), bcrypt.DefaultCost)
 	admin := User{
 		Email:           "admin@example.com",
-		Username:        "AdminUser",
+		Username:        "Tom",
 		PasswordHash:    string(passwordHash),
 		PublicProfile:   true,
 		PrimaryColor:    0xFF000000, // ARGB for black
@@ -299,28 +302,56 @@ func removeFriend(c *gin.Context) {
 func listFriends(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
-	var friends []User
-	db.Table("users").
-		Select("DISTINCT users.user_id, users.username, users.public_profile, users.primary_color, users.highlight_color, users.dark_mode, users.translation_id, users.translation_name").
-		Joins("JOIN friends ON (friends.friend_id = users.user_id AND friends.user_id = ?) OR (friends.user_id = users.user_id AND friends.friend_id = ?)", userID, userID).
-		Where("friends.status = 'accepted'").
-		Find(&friends)
-
-	var friendResponses []UserResponse
-	for _, friend := range friends {
-		friendResponses = append(friendResponses, UserResponse{
-			UserID:          friend.UserID,
-			Username:        friend.Username,
-			PublicProfile:   friend.PublicProfile,
-			PrimaryColor:    friend.PrimaryColor,
-			HighlightColor:  friend.HighlightColor,
-			DarkMode:        friend.DarkMode,
-			TranslationId:   friend.TranslationId,
-			TranslationName: friend.TranslationName,
-		})
+	var friends []struct {
+		UserID          uint   `json:"user_id"`
+		Username        string `json:"username"`
+		PublicProfile   bool   `json:"public_profile"`
+		PrimaryColor    int    `json:"primary_color"`
+		HighlightColor  int    `json:"highlight_color"`
+		DarkMode        bool   `json:"dark_mode"`
+		TranslationId   string `json:"translation_id"`
+		TranslationName string `json:"translation_name"`
+		MutualFriends   int    `json:"mutual_friends"`
+		TotalLikeCount  int    `json:"total_like_count"`
 	}
 
-	c.JSON(http.StatusOK, friendResponses)
+	db.Raw(`
+		SELECT 
+			u.user_id, 
+			u.username, 
+			u.public_profile, 
+			u.primary_color, 
+			u.highlight_color, 
+			u.dark_mode, 
+			u.translation_id, 
+			u.translation_name,
+			(
+				SELECT COUNT(*) 
+				FROM friends f1
+				WHERE (
+					(f1.user_id = u.user_id AND f1.friend_id IN (
+						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
+						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
+					))
+					OR
+					(f1.friend_id = u.user_id AND f1.user_id IN (
+						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
+						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
+					))
+				)
+			) AS mutual_friends,
+			(
+				SELECT COUNT(*) 
+				FROM likes 
+				WHERE likes.user_id = u.user_id
+			) AS total_like_count
+		FROM users u
+		INNER JOIN friends f ON (f.friend_id = u.user_id AND f.user_id = ?) 
+			OR (f.user_id = u.user_id AND f.friend_id = ?)
+		WHERE f.status = 'accepted'
+	`, userID, userID, userID, userID, userID, userID, userID, userID).Scan(&friends)
+
+	c.JSON(http.StatusOK, friends)
 }
 
 func listSuggestedFriends(c *gin.Context) {
@@ -333,65 +364,93 @@ func listSuggestedFriends(c *gin.Context) {
 
 	var excludedUserIDs []uint
 
-	// Retrieve all related user IDs to exclude
-	db.Table("friends").
-		Select("friend_id").
-		Where("user_id = ? AND status IN ('accepted', 'requested', 'rejected')", userIDUint).
-		Scan(&excludedUserIDs)
-	db.Table("friends").
-		Select("user_id").
-		Where("friend_id = ? AND status IN ('accepted', 'requested', 'rejected')", userIDUint).
-		Scan(&excludedUserIDs)
+	// Retrieve all related user IDs to exclude (accepted, requested, or rejected)
+	db.Raw(`
+		SELECT DISTINCT user_id 
+		FROM (
+			SELECT friend_id AS user_id 
+			FROM friends 
+			WHERE user_id = ? AND status IN ('accepted', 'requested', 'rejected')
+			UNION
+			SELECT user_id 
+			FROM friends 
+			WHERE friend_id = ? AND status IN ('accepted', 'requested', 'rejected')
+		) AS related_users
+	`, userIDUint, userIDUint).Scan(&excludedUserIDs)
 
 	excludedUserIDs = append(excludedUserIDs, userIDUint)
 
-	// Use a map to ensure unique IDs
-	excludedUserMap := make(map[uint]struct{})
-	for _, id := range excludedUserIDs {
-		excludedUserMap[id] = struct{}{}
+	var suggestedFriends []struct {
+		UserID          uint   `json:"user_id"`
+		Username        string `json:"username"`
+		MutualFriends   int    `json:"mutual_friends"`
+		TotalLikeCount  int    `json:"total_like_count"`
+		PublicProfile   bool   `json:"public_profile"`
+		PrimaryColor    int    `json:"primary_color"`
+		HighlightColor  int    `json:"highlight_color"`
+		DarkMode        bool   `json:"dark_mode"`
+		TranslationId   string `json:"translation_id"`
+		TranslationName string `json:"translation_name"`
 	}
 
-	uniqueExcludedUserIDs := make([]uint, 0, len(excludedUserMap))
-	for id := range excludedUserMap {
-		uniqueExcludedUserIDs = append(uniqueExcludedUserIDs, id)
-	}
+	db.Raw(`
+		SELECT 
+			u.user_id, 
+			u.username, 
+			u.public_profile, 
+			u.primary_color, 
+			u.highlight_color, 
+			u.dark_mode, 
+			u.translation_id, 
+			u.translation_name,
+			(
+				SELECT COUNT(*) 
+				FROM friends f1
+				WHERE (
+					(f1.user_id = u.user_id AND f1.friend_id IN (
+						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
+						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
+					))
+					OR
+					(f1.friend_id = u.user_id AND f1.user_id IN (
+						SELECT CASE WHEN f2.user_id = ? THEN f2.friend_id ELSE f2.user_id END 
+						FROM friends f2 WHERE f2.user_id = ? OR f2.friend_id = ?
+					))
+				)
+			) AS mutual_friends,
+			(
+				SELECT COUNT(*) 
+				FROM likes 
+				WHERE likes.user_id = u.user_id
+			) AS total_like_count
+		FROM users u
+		WHERE u.public_profile = true 
+			AND u.user_id NOT IN (?)
+	`, userIDUint, userIDUint, userIDUint, userIDUint, userIDUint, userIDUint, excludedUserIDs).Scan(&suggestedFriends)
 
-	// Retrieve users not in the exclusion list and with public profile
-	var suggestedFriends []User
-	if err := db.Table("users").
-		Select("user_id, username, public_profile, primary_color, highlight_color, dark_mode, translation_id, translation_name").
-		Where("public_profile = true AND user_id NOT IN (?)", uniqueExcludedUserIDs).
-		Find(&suggestedFriends).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve suggested friends"})
-		return
-	}
-
-	var suggestedFriendResponses []UserResponse
-	for _, suggestedFriend := range suggestedFriends {
-		suggestedFriendResponses = append(suggestedFriendResponses, UserResponse{
-			UserID:          suggestedFriend.UserID,
-			Username:        suggestedFriend.Username,
-			PublicProfile:   suggestedFriend.PublicProfile,
-			PrimaryColor:    suggestedFriend.PrimaryColor,
-			HighlightColor:  suggestedFriend.HighlightColor,
-			DarkMode:        suggestedFriend.DarkMode,
-			TranslationId:   suggestedFriend.TranslationId,
-			TranslationName: suggestedFriend.TranslationName,
-		})
-	}
-
-	c.JSON(http.StatusOK, suggestedFriendResponses)
+	c.JSON(http.StatusOK, suggestedFriends)
 }
 
 func listFriendRequests(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
-	var friendRequests []FriendRequestResponse
-	err := db.Table("users").
-		Select("users.user_id, users.username").
-		Joins("JOIN friends ON friends.user_id = users.user_id").
-		Where("friends.friend_id = ? AND friends.status = ?", userID, "requested").
-		Scan(&friendRequests).Error
+	var friendRequests []struct {
+		UserID   uint   `json:"user_id"`
+		Username string `json:"username"`
+	}
+
+	err := db.Raw(`
+		SELECT 
+			u.user_id, 
+			u.username
+		FROM users u
+		JOIN friends f ON (
+			(f.friend_id = u.user_id AND f.user_id = ?) OR 
+			(f.user_id = u.user_id AND f.friend_id = ?)
+		)
+		WHERE 
+			(f.friend_id = ? AND f.status = 'requested')
+	`, userID, userID, userID).Scan(&friendRequests).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve friend requests"})
@@ -517,6 +576,7 @@ func loginUser(c *gin.Context) {
 }
 
 func getPublicVerses(c *gin.Context) {
+	userID := c.MustGet("userID").(uint) // Get current user ID
 	page := c.DefaultQuery("page", "1")
 	pageSize := c.DefaultQuery("pageSize", "10")
 	pageInt, err := strconv.Atoi(page)
@@ -528,15 +588,28 @@ func getPublicVerses(c *gin.Context) {
 		pageSizeInt = 10
 	}
 
-	var verses []UserVerse
+	var verses []struct {
+		UserVerse
+		Username string `json:"username"`
+	}
 	offset := (pageInt - 1) * pageSizeInt
 
-	// Fetch verses from all users with public profiles
-	err = db.Joins("JOIN users ON users.user_id = user_verses.user_id").
-		Where("users.public_profile = true AND user_verses.note != ''").
-		Offset(offset).
-		Limit(pageSizeInt).
-		Find(&verses).Error
+	err = db.Raw(`
+		SELECT uv.*, u.username 
+		FROM user_verses uv
+		JOIN users u ON u.user_id = uv.user_id
+		LEFT JOIN friends f ON (
+			(f.user_id = u.user_id AND f.friend_id = ?) OR 
+			(f.friend_id = u.user_id AND f.user_id = ?)
+		)
+		WHERE uv.is_published = true AND (
+			u.user_id = ? OR 
+			u.public_profile = true OR 
+			f.status = 'accepted'
+		)
+		ORDER BY uv.user_verse_id DESC
+		LIMIT ? OFFSET ?
+	`, userID, userID, userID, pageSizeInt, offset).Scan(&verses).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve verses: %v", err)})
@@ -544,6 +617,52 @@ func getPublicVerses(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, verses)
+}
+
+func publishVerse(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	verseID := c.Param("id")
+
+	var req struct {
+		IsPublished bool `json:"is_published"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	var verse UserVerse
+	if err := db.First(&verse, "user_verse_id = ? AND user_id = ?", verseID, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Verse not found or you don't have permission to update this verse"})
+		return
+	}
+
+	verse.IsPublished = req.IsPublished
+	if err := db.Save(&verse).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update verse publication status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Verse publication status updated successfully"})
+}
+
+func unpublishVerse(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	verseID := c.Param("id")
+
+	var verse UserVerse
+	if err := db.First(&verse, "user_verse_id = ? AND user_id = ?", verseID, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Verse not found or you don't have permission to update this verse"})
+		return
+	}
+
+	verse.IsPublished = false
+	if err := db.Save(&verse).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update verse publication status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Verse unpublished successfully"})
 }
 
 // Helper function to remove duplicate IDs
@@ -622,7 +741,8 @@ func getSavedVerses(c *gin.Context) {
 
 	var verses []UserVerse
 	offset := (pageInt - 1) * pageSizeInt
-	if err := db.Where("user_id = ?", userID).Offset(offset).Limit(pageSizeInt).Find(&verses).Error; err != nil {
+	if err := db.Select("user_verse_id, verse_id, content, note, is_published"). // Include is_published
+											Where("user_id = ?", userID).Offset(offset).Limit(pageSizeInt).Find(&verses).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

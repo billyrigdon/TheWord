@@ -42,7 +42,7 @@ class VerseProvider with ChangeNotifier {
     };
 
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/verses/save'),
+      Uri.parse('http://10.0.2.2:8080/verses/save'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ class VerseProvider with ChangeNotifier {
 
     final currentPage = (publicVerses.length ~/ pageSize) + 1;
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/public?page=$currentPage&pageSize=$pageSize'),
+      Uri.parse('http://10.0.2.2:8080/verses/public?page=$currentPage&pageSize=$pageSize'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -116,7 +116,7 @@ class VerseProvider with ChangeNotifier {
     if (_token == null) return;
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/saved'),
+      Uri.parse('http://10.0.2.2:8080/verses/saved'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -147,7 +147,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getLikesCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -161,7 +161,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getCommentCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/comments/count'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/comments/count'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -175,7 +175,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> toggleLike(int userVerseId) async {
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -188,7 +188,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> unsaveVerse(String userVerseId) async {
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ class VerseProvider with ChangeNotifier {
     }
 
     final response = await http.put(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -232,4 +232,58 @@ class VerseProvider with ChangeNotifier {
       print('Failed to update note: ${response.body}');
     }
   }
+
+  Future<bool> publishVerse(String userVerseId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/publish'),
+        headers: <String, String>{
+          'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, bool>{
+          'is_published': true,
+        }),
+      );
+      print(response.toString());
+      if (response.statusCode == 200) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Failed to publish verse: ${response.statusCode}');
+        return false;
+      }
+    } catch (error) {
+      print('Failed to publish verse: $error');
+      return false;
+    }
+  }
+
+  Future<bool> unpublishVerse(String userVerseId) async {
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/unpublish'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token', // Include the token here
+        },
+        body: jsonEncode(<String, bool>{
+          'is_published': false,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Failed to unpublish verse: ${response.statusCode}');
+        return false;
+      }
+    } catch (error) {
+      print('Failed to unpublish verse: $error');
+      return false;
+    }
+  }
+
 }

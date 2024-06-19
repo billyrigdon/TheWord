@@ -13,6 +13,7 @@ class BibleProvider with ChangeNotifier {
       Uri.parse('https://api.scripture.api.bible/v1/bibles'),
       headers: {'api-key': apiKey},
     );
+    print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       _translations = data['data'];
