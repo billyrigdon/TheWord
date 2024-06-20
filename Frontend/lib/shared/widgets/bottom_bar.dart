@@ -37,7 +37,8 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     });
   }
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
   }
 
@@ -94,7 +95,8 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => RegistrationScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => RegistrationScreen()),
                   );
                 },
               ),
@@ -166,50 +168,68 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
         ),
         body: settingsProvider.isLoggedIn
             ? IndexedStack(
-          index: _currentIndex,
-          children: _screens,
-        )
+                index: _currentIndex,
+                children: _screens,
+              )
             : BookListScreen(), // Display only the BookListScreen if not logged in
         bottomNavigationBar: settingsProvider.isLoggedIn
             ? Theme(
-          data: ThemeData(
-            canvasColor: currentColor, // Set canvasColor to currentColor
-          ),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.book, color: fontColor,),
-                label: 'Bible',
-              ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.explore, color: fontColor,),
-                  label: 'Explore',
+                data: ThemeData(
+                  canvasColor: currentColor, // Set canvasColor to currentColor
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home, color: fontColor,),
-                  label: 'My Home',
+                child: BottomNavigationBar(
+                  type: BottomNavigationBarType.fixed,
+                  currentIndex: _currentIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.book,
+                        color: fontColor,
+                      ),
+                      label: 'Bible',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.explore,
+                        color: fontColor,
+                      ),
+                      label: 'Explore',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.home,
+                        color: fontColor,
+                      ),
+                      label: 'My Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.group,
+                        color: fontColor,
+                      ),
+                      label: 'Friends',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.chat,
+                        color: fontColor,
+                      ),
+                      label: 'Ask Archie',
+                    ),
+                  ],
+                  selectedItemColor: _getContrastingTextColor(
+                      currentColor ?? createMaterialColor(Colors.black)),
+                  unselectedItemColor: _getContrastingTextColor(
+                          currentColor ?? createMaterialColor(Colors.black))
+                      .withOpacity(0.6),
+                  showUnselectedLabels: true,
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.group, color: fontColor,),
-                  label: 'Friends',
-                ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.chat, color: fontColor,),
-                label: 'Ask Archie',
-              ),
-            ],
-            selectedItemColor: _getContrastingTextColor(currentColor ?? createMaterialColor(Colors.black)),
-            unselectedItemColor: _getContrastingTextColor(currentColor ?? createMaterialColor(Colors.black)).withOpacity(0.6),
-            showUnselectedLabels: true,
-          ),
-        )
+              )
             : null, // No bottom bar if not logged in
       ),
     );
@@ -219,8 +239,9 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
   Color _getContrastingTextColor(MaterialColor backgroundColor) {
     // Calculate brightness to determine if white or black text is more readable
     int brightnessValue = ((backgroundColor.red * 299) +
-        (backgroundColor.green * 587) +
-        (backgroundColor.blue * 114)) ~/ 1000; // Integer division
+            (backgroundColor.green * 587) +
+            (backgroundColor.blue * 114)) ~/
+        1000; // Integer division
     return brightnessValue > 128 ? Colors.black : Colors.white;
   }
 
@@ -244,5 +265,4 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     }
     return MaterialColor(color.value, swatch);
   }
-  
 }

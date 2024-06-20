@@ -183,9 +183,27 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> fetchTranslations() async {
     if (_translations.isEmpty) {
-      _translations = await settingsService.fetchTranslations();
+      List<dynamic> fetchedTranslations = await settingsService.fetchTranslations();
+
+      // Use a set to track unique names and filter duplicates
+      Set<String> seenNames = {};
+      _translations = [];
+
+      List<String> duplicateTracker = [];
+      for (dynamic translation in fetchedTranslations) {
+        String name = (translation["name"] as String).toLowerCase();
+        print(name);
+        if (!seenNames.contains(name)) {
+          seenNames.add(name);
+          fetchedTranslations.add(translation);
+        }
+      }
+      _translations = fetchedTranslations;
     }
+    notifyListeners();
   }
+
+
 
   Future<void> updateUserSettingsOnBackend() async {
     final prefs = await SharedPreferences.getInstance();

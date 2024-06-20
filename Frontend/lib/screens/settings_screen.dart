@@ -1,47 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_autocomplete/easy_autocomplete.dart';
 import '../providers/bible_provider.dart';
 import '../providers/settings_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
-  // Function to create a muted MaterialColor
-  MaterialColor createMutedMaterialColor(Color color) {
-    return MaterialColor(
-      color.value,
-      <int, Color>{
-        50: adjustColor(color, 0.9),
-        100: adjustColor(color, 0.8),
-        200: adjustColor(color, 0.7),
-        300: adjustColor(color, 0.6),
-        400: adjustColor(color, 0.5),
-        500: adjustColor(color, 0.4),
-        600: adjustColor(color, 0.3),
-        700: adjustColor(color, 0.2),
-        800: adjustColor(color, 0.1),
-        900: adjustColor(color, 0.05),
-      },
-    );
+class SettingsScreen extends StatefulWidget {
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  TextEditingController? _searchController;
+  List<dynamic> _filteredTranslations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final bibleProvider = Provider.of<BibleProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    _searchController = TextEditingController(text:settingsProvider.currentTranslationName);
+    _filteredTranslations = bibleProvider.translations;
+    _searchController?.addListener(_filterTranslations);
   }
 
-// Function to adjust the brightness of a color
-  Color adjustColor(Color color, double factor) {
-    return Color.fromRGBO(
-      (color.red * factor).toInt(),
-      (color.green * factor).toInt(),
-      (color.blue * factor).toInt(),
-      1,
-    );
+  void _filterTranslations() {
+    final bibleProvider = Provider.of<BibleProvider>(context, listen: false);
+    String query = _searchController!.text.toLowerCase();
+    String currentTranslationId =
+        Provider.of<SettingsProvider>(context, listen: false).currentTranslationId!;
+
+    setState(() {
+      _filteredTranslations = bibleProvider.translations
+          .where((translation) =>
+      translation['name'].toLowerCase().contains(query) ||
+          translation['language']['name'].toLowerCase().contains(query))
+          .toList();
+
+      if (currentTranslationId.isNotEmpty &&
+          !_filteredTranslations.any(
+                  (translation) => translation['id'] == currentTranslationId)) {
+        var currentTranslation = bibleProvider.translations
+            .firstWhere((translation) => translation['id'] == currentTranslationId);
+        _filteredTranslations.insert(0, currentTranslation);
+      }
+    });
   }
 
-  List<MaterialColor> colors = [];
-
+  @override
+  void dispose() {
+    _searchController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final bibleProvider = Provider.of<BibleProvider>(context);
 
-    colors = [
+    List<MaterialColor> colors = [
       createMutedMaterialColor(Colors.red),
       createMutedMaterialColor(Colors.pink),
       createMutedMaterialColor(Colors.purple),
@@ -72,32 +89,47 @@ class SettingsScreen extends StatelessWidget {
                 child: Text('Bible Translation:', style: Theme.of(context).textTheme.bodyMedium),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: settingsProvider.currentTranslationId == '' ? null : settingsProvider.currentTranslationId,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Select Translation',
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: EasyAutocomplete(
+                  controller: _searchController,
+
+                  decoration: const InputDecoration(
+                    hintText: 'Search Translations',
+                    suffixIcon: Icon(Icons.search),
+                    border: UnderlineInputBorder(),
+                  ),
+                  suggestions: _filteredTranslations.map((translation) {
+                    String language = translation['language']['name'];
+                    return '${translation['name']} ($language)';
+                  }).toList(),
+                  onChanged: (value) {
+                    _filterTranslations();
+                  },
+                  onSubmitted: (String selection) {
+                    var selectedTranslation = bibleProvider.translations.firstWhere(
+                            (translation) =>
+                        '${translation['name']} (${translation['language']['name']})' == selection);
+                    settingsProvider.updateTranslation(
+                        selectedTranslation['id'], selectedTranslation['name']);
+                    _searchController!.selection = selectedTranslation['name'];
+                  },
+                  suggestionBuilder: (suggestion) {
+                    return ListTile(
+                      minTileHeight: 10.0,
+                      title: Text(
+                        suggestion,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: suggestion.contains(settingsProvider.currentTranslationId!)
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                    );
+                  },
                 ),
-                isExpanded: true,
-                items: bibleProvider.translations
-                    .map<DropdownMenuItem<String>>((translation) {
-                  String language = translation['language']['name'];
-                  return DropdownMenuItem<String>(
-                    value: translation['id'],
-                    child: Text(
-                      '${translation['name']} ($language)',
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    var selectedTranslation = bibleProvider.translations.firstWhere((t) => t['id'] == newValue);
-                    settingsProvider.updateTranslation(newValue, selectedTranslation['name']);
-                  }
-                },
               ),
+              const SizedBox(height: 16),
+              // Rest of your UI elements
               if (settingsProvider.isLoggedIn)
                 const SizedBox(height: 16),
               if (settingsProvider.isLoggedIn)
@@ -137,7 +169,9 @@ class SettingsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: color,
-                          border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
+                          border: isSelected
+                              ? Border.all(color: Colors.white, width: 3)
+                              : null,
                         ),
                         child: isSelected
                             ? const Center(child: Icon(Icons.check, color: Colors.white))
@@ -165,7 +199,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     var color = colors[index];
-                    bool isSelected = settingsProvider.highlightColor?.value == color.value;
+                    bool isSelected =
+                        settingsProvider.highlightColor?.value == color.value;
                     return GestureDetector(
                       onTap: () {
                         settingsProvider.updateHighlightColor(color);
@@ -174,7 +209,9 @@ class SettingsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: color,
-                          border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
+                          border: isSelected
+                              ? Border.all(color: Colors.white, width: 3)
+                              : null,
                         ),
                         child: isSelected
                             ? const Center(child: Icon(Icons.check, color: Colors.white))
@@ -213,8 +250,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              if (settingsProvider.isLoggedIn) ...[
-
+              if (settingsProvider.isLoggedIn)
                 Center(
                   child: ElevatedButton(
                     onPressed: () async {
@@ -226,11 +262,37 @@ class SettingsScreen extends StatelessWidget {
                     child: const Text('Sync Settings'),
                   ),
                 ),
-              ],
             ],
           ),
         ),
       ),
+    );
+  }
+
+  MaterialColor createMutedMaterialColor(Color color) {
+    return MaterialColor(
+      color.value,
+      <int, Color>{
+        50: adjustColor(color, 0.9),
+        100: adjustColor(color, 0.8),
+        200: adjustColor(color, 0.7),
+        300: adjustColor(color, 0.6),
+        400: adjustColor(color, 0.5),
+        500: adjustColor(color, 0.4),
+        600: adjustColor(color, 0.3),
+        700: adjustColor(color, 0.2),
+        800: adjustColor(color, 0.1),
+        900: adjustColor(color, 0.05),
+      },
+    );
+  }
+
+  Color adjustColor(Color color, double factor) {
+    return Color.fromRGBO(
+      (color.red * factor).toInt(),
+      (color.green * factor).toInt(),
+      (color.blue * factor).toInt(),
+      1,
     );
   }
 }

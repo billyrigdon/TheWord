@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -61,14 +60,6 @@ class _VerseCardState extends State<VerseCard> {
     });
   }
 
-  void _onNoteChanged(String note) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      widget.onSaveNote.call(note);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -76,14 +67,15 @@ class _VerseCardState extends State<VerseCard> {
         ? theme.cardColor.withOpacity(0.9)
         : theme.cardColor.withOpacity(0.7);
 
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      color: backgroundColor,
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: widget.isSaved ? _toggleExpand : widget.onComment,
-            child: ListTile(
+    return GestureDetector(
+      onTap: widget.isSaved ? _toggleExpand : widget.onComment,
+      behavior: HitTestBehavior.translucent,
+      child: Card(
+        margin: const EdgeInsets.all(8.0),
+        color: backgroundColor,
+        child: Column(
+          children: [
+            ListTile(
               title: Text(widget.verseId),
               subtitle: Text(
                 widget.verseContent,
@@ -98,84 +90,106 @@ class _VerseCardState extends State<VerseCard> {
                     )
                   : null,
             ),
-          ),
-          if (!_isExpanded && !widget.isSaved)
-            Padding(
-              padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(widget.note),
-                ],
-              ),
-            ),
-          if (_isExpanded && widget.isSaved)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.end, // Right-align the button
-                children: [
-                  TextField(
-                    controller: _noteController,
-                    decoration: const InputDecoration(
-                      alignLabelWithHint: true,
-                      labelText: 'Add a note here!',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 8,
-                  ),
-                  const SizedBox(height: 8.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          widget.onSaveNote(_noteController.text);
-                        },
-                        child: const Text('Save Note'),
-                      ),
-                      const SizedBox(width: 12.0),
-                      if (widget.isPublished && widget.onUnpublish != null)
-                        ElevatedButton(
-                          onPressed: widget.onUnpublish,
-                          child: const Text('Unpublish'),
+            if (!_isExpanded && !widget.isSaved)
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8.0),
+                          constraints: const BoxConstraints(
+                            maxWidth:
+                                400.0, // Ensure the container has a maximum width
+                          ),
+                          child: Text(
+                            widget.note,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines:
+                                1, // Set maxLines to 1 for a single-line truncation
+                            style: const TextStyle(fontSize: 16),
+                          ),
                         )
-                      else if (!widget.isPublished && widget.onPublish != null)
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            if (_isExpanded && widget.isSaved)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.end, // Right-align the button
+                  children: [
+                    TextField(
+                      controller: _noteController,
+                      decoration: const InputDecoration(
+                        alignLabelWithHint: true,
+                        labelText: 'Add a note here!',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 8,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
                         ElevatedButton(
-                          onPressed: widget.onPublish,
-                          child: const Text('Publish'),
+                          onPressed: () {
+                            widget.onSaveNote(_noteController.text);
+                          },
+                          child: const Text('Save Note'),
                         ),
-                    ],
-                  )
+                        const SizedBox(width: 12.0),
+                        if (widget.isPublished && widget.onUnpublish != null)
+                          ElevatedButton(
+                            onPressed: widget.onUnpublish,
+                            child: const Text('Unpublish'),
+                          )
+                        else if (!widget.isPublished &&
+                            widget.onPublish != null)
+                          ElevatedButton(
+                            onPressed: () {
+                              widget.onPublish!.call();
+                              widget.onSaveNote.call(_noteController.text);
+                            },
+                            child: const Text('Publish'),
+                          ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            Padding(
+              padding:
+                  const EdgeInsets.only(right: 8.0, bottom: 8.0, left: 18.0),
+              child: Row(
+                mainAxisAlignment: !widget.isSaved
+                    ? MainAxisAlignment.spaceBetween
+                    : MainAxisAlignment.end,
+                children: [
+                  if (!widget.isSaved) Text(widget.username!),
+                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    if (!widget.isSaved) Text(widget.likesCount.toString()),
+                    if (!widget.isSaved)
+                      IconButton(
+                        icon: const Icon(Icons.thumb_up),
+                        onPressed: widget.onLike,
+                      ),
+                    Text(widget.commentCount.toString()),
+                    IconButton(
+                      icon: const Icon(Icons.comment),
+                      onPressed: widget.onComment,
+                    ),
+                  ]),
                 ],
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0, bottom: 8.0, left: 18.0),
-            child: Row(
-              mainAxisAlignment: !widget.isSaved
-                  ? MainAxisAlignment.spaceBetween
-                  : MainAxisAlignment.end,
-              children: [
-                if (!widget.isSaved) Text('${widget.username!}'),
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  if (!widget.isSaved) Text(widget.likesCount.toString()),
-                  if (!widget.isSaved)
-                    IconButton(
-                      icon: const Icon(Icons.thumb_up),
-                      onPressed: widget.onLike,
-                    ),
-                  Text(widget.commentCount.toString()),
-                  IconButton(
-                    icon: const Icon(Icons.comment),
-                    onPressed: widget.onComment,
-                  ),
-                ]),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

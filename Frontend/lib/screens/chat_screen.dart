@@ -34,7 +34,7 @@ class ChatScreenState extends State<ChatScreen> {
       });
     } catch (err) {
       setState(() {
-        _messages.add("**Error**: SOMETHING WENT WRONG. PLEASE TRY AGAIN.");
+        _messages.add("**Error**: Something has gone wrong! Please try again..");
       });
     } finally {
       setState(() {

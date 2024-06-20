@@ -76,7 +76,12 @@
 import 'package:flutter/material.dart';
 import 'package:TheWord/screens/login_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
+import '../providers/settings_provider.dart';
+import '../shared/widgets/bottom_bar.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -88,6 +93,36 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   bool _privacyPolicyAgreed = false;
+
+  Future<bool> _login() async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8080/login'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      final token = body['token'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      await prefs.setInt('tokenExpiry',
+          DateTime.now().add(Duration(days: 30)).millisecondsSinceEpoch);
+      await Provider.of<SettingsProvider>(context, listen: false)
+          .loadSettings();
+      return true;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed')),
+      );
+    }
+    return false;
+  }
 
   Future<void> _register() async {
     if (!_privacyPolicyAgreed) {
@@ -110,10 +145,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
 
     if (response.statusCode == 200) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
+      bool loginSuccessful = await _login();
+
+      if (loginSuccessful) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => BottomBarNavigation()),
+        );
+      } else {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => LoginScreen()));
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration failed')),
@@ -127,7 +169,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Privacy Policy'),
-          content: SingleChildScrollView(
+          content: const SingleChildScrollView(
             child: Text(
               '''
 Privacy Policy

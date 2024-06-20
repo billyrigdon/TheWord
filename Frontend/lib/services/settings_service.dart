@@ -18,21 +18,20 @@ class SettingsService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      print('Failed to fetch user settings: ${response.body}');
       return null;
     }
   }
 
   Future<void> updateUserSettings(
-      String token,
-      int primaryColor,
-      int highlightColor,
-      bool darkMode,
-      bool publicProfile,
-      String translationId,
-      String translationName,
-      ) async {
-      var payload = json.encode({
+    String token,
+    int primaryColor,
+    int highlightColor,
+    bool darkMode,
+    bool publicProfile,
+    String translationId,
+    String translationName,
+  ) async {
+    var payload = json.encode({
       'primary_color': primaryColor,
       'highlight_color': highlightColor,
       'dark_mode': darkMode,
@@ -40,14 +39,13 @@ class SettingsService {
       'translation_id': translationId,
       'translation_name': translationName,
     });
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/user/settings'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: payload
-    );
+    final response =
+        await http.post(Uri.parse('http://10.0.2.2:8080/user/settings'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: payload);
 
     if (response.statusCode != 200) {
       print('Failed to update user settings: ${response.body}');
@@ -85,11 +83,13 @@ class SettingsService {
     final prefs = await SharedPreferences.getInstance();
     String? themeModeString = prefs.getString('themeMode');
     return themeModeString != null
-        ? ThemeMode.values.firstWhere((mode) => mode.toString() == themeModeString)
+        ? ThemeMode.values
+            .firstWhere((mode) => mode.toString() == themeModeString)
         : ThemeMode.dark;
   }
 
-  Future<void> saveTranslation(String translationId, String translationName) async {
+  Future<void> saveTranslation(
+      String translationId, String translationName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('translationId', translationId);
     await prefs.setString('translationName', translationName);

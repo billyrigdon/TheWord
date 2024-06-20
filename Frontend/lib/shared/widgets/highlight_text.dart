@@ -8,15 +8,16 @@ class SelectableTextHighlight extends StatefulWidget {
   final TextStyle style;
   int? currentVerseIndex;
 
-  SelectableTextHighlight({
-    Key? key,
-    required this.verses,
-    required this.style,
-    this.currentVerseIndex
-  }) : super(key: key);
+  SelectableTextHighlight(
+      {Key? key,
+      required this.verses,
+      required this.style,
+      this.currentVerseIndex})
+      : super(key: key);
 
   @override
-  _SelectableTextHighlightState createState() => _SelectableTextHighlightState();
+  _SelectableTextHighlightState createState() =>
+      _SelectableTextHighlightState();
 }
 
 class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
@@ -29,7 +30,8 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
     print(verseId);
     if (verseProvider.isVerseSaved(verseId.toString())) {
       print('IS SAVED--------------------------------------------');
-      final userVerseId = verseProvider.getSavedVerseUserVerseID(verseId.toString());
+      final userVerseId =
+          verseProvider.getSavedVerseUserVerseID(verseId.toString());
       if (userVerseId != null) {
         print('UNSAVING------------------------------------------');
         verseProvider.unsaveVerse(userVerseId.toString());
@@ -50,16 +52,14 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final verseProvider = Provider.of<VerseProvider>(context);
 
-
     return ListView.builder(
       itemCount: widget.verses.length,
       itemBuilder: (context, index) {
         final verse = widget.verses[index];
-        print(verse);
         final verseId = verse['id'];
         final verseText = verse['text'];
         final isHighlighted = verseProvider.isVerseSaved(verseId);
-        print(verseId);
+
         return GestureDetector(
           onDoubleTap: () {
             if (!_isNumeric(verseText)) {
@@ -69,7 +69,9 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
           child: Container(
             padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
-              color: isHighlighted ? settingsProvider.highlightColor : Colors.transparent,
+              color: isHighlighted
+                  ? settingsProvider.highlightColor
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: Column(
@@ -78,8 +80,18 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
                 SelectableText(
                   verseText,
                   style: isHighlighted
-                      ? TextStyle(fontSize: 16, color: settingsProvider.getFontColor(settingsProvider.highlightColor!), fontWeight: widget.currentVerseIndex == index ? FontWeight.bold : FontWeight.normal)
-                      : TextStyle(fontSize: 16, fontWeight: widget.currentVerseIndex == index ? FontWeight.bold : FontWeight.normal),
+                      ? TextStyle(
+                          fontSize: 16,
+                          color: settingsProvider
+                              .getFontColor(settingsProvider.highlightColor!),
+                          fontWeight: widget.currentVerseIndex == index
+                              ? FontWeight.bold
+                              : FontWeight.normal)
+                      : TextStyle(
+                          fontSize: 16,
+                          fontWeight: widget.currentVerseIndex == index
+                              ? FontWeight.bold
+                              : FontWeight.normal),
                 ),
               ],
             ),
