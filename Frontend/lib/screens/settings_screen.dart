@@ -37,6 +37,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           translation['language']['name'].toLowerCase().contains(query))
           .toList();
 
+// Use a Set to filter out duplicates based on the 'name' key.
+      var uniqueTranslations = _filteredTranslations
+          .map((translation) => Map.from(translation))
+          .fold<Map<String, Map>>({}, (map, translation) {
+        map[translation['name'].toLowerCase()] = translation;
+        return map;
+      }).values.toList();
+
+      _filteredTranslations = uniqueTranslations;
+
+
+
       if (currentTranslationId.isNotEmpty &&
           !_filteredTranslations.any(
                   (translation) => translation['id'] == currentTranslationId)) {
