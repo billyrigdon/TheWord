@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"

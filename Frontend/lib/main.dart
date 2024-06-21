@@ -24,12 +24,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => VerseProvider()),
       ],
-      child: BibleReaderApp(),
+      child: TheWordApp(),
     ),
   );
 }
 
-class BibleReaderApp extends StatelessWidget {
+class TheWordApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
