@@ -122,7 +122,7 @@ class SavedVersesScreen extends StatelessWidget {
               },
               onPublish: isPublished
                   ? null
-                  : () => _publishVerse(context, userVerseId),
+                  : (note) => _publishVerse(context, verse["VerseID"] , userVerseId, note),
               onUnpublish: isPublished
                   ? () => _unpublishVerse(context, userVerseId)
                   : null,
@@ -140,19 +140,28 @@ class SavedVersesScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _publishVerse(BuildContext context, int userVerseId) async {
+  Future<void> _publishVerse(BuildContext context, verseId, int userVerseId, String note) async {
     final verseProvider = Provider.of<VerseProvider>(context, listen: false);
-    final success = await verseProvider.publishVerse(userVerseId.toString());
-    if (success) {
-      verseProvider.init();
+    try {
+      await verseProvider.saveNote(verseId, userVerseId.toString(), note);
+
+      final success = await verseProvider.publishVerse(userVerseId.toString());
+      if (success) {
+        verseProvider.init();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verse published successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to publish verse')),
+        );
+      }
+    } catch (err) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verse published successfully')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to publish verse')),
+        const SnackBar(content: Text('Failed to save verse')),
       );
     }
+
   }
 
   Future<void> _unpublishVerse(BuildContext context, int userVerseId) async {

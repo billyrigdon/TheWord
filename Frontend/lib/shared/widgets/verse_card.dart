@@ -13,7 +13,7 @@ class VerseCard extends StatefulWidget {
   final bool isSaved;
   final bool isPublished; // New property
   final ValueChanged<String> onSaveNote;
-  final VoidCallback? onPublish; // Optional publish function
+  final ValueChanged<String>? onPublish; // Optional publish function
   final VoidCallback? onUnpublish; // Optional unpublish function
 
   VerseCard({
@@ -153,9 +153,8 @@ class _VerseCardState extends State<VerseCard> {
                             widget.onPublish != null)
                           ElevatedButton(
                             onPressed: () {
-                              widget.onPublish!.call();
-                              widget.onSaveNote.call(_noteController.text);
-                            },
+                              widget.onPublish!(_noteController.text);
+                              },
                             child: const Text('Publish'),
                           ),
                       ],
