@@ -13,7 +13,7 @@ class FriendListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final friendProvider = Provider.of<FriendProvider>(context, listen: false);
+    final friendProvider = Provider.of<FriendProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     final notificationsProvider = Provider.of<NotificationProvider>(context);
 

@@ -26,7 +26,7 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
     super.initState();
   }
 
-  void _toggleVerse(VerseProvider verseProvider, String verseId, String text) {
+  void _toggleVerse(VerseProvider verseProvider, String verseId, String text) async {
     print(verseId);
     if (verseProvider.isVerseSaved(verseId.toString())) {
       print('IS SAVED--------------------------------------------');
@@ -34,11 +34,11 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
           verseProvider.getSavedVerseUserVerseID(verseId.toString());
       if (userVerseId != null) {
         print('UNSAVING------------------------------------------');
-        verseProvider.unsaveVerse(userVerseId.toString());
+        await verseProvider.unsaveVerse(userVerseId.toString());
       }
     } else {
       print("------------------------------------SAVING");
-      verseProvider.saveVerse(verseId.toString(), text);
+      await verseProvider.saveVerse(verseId.toString(), text);
     }
   }
 
