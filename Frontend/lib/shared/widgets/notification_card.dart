@@ -51,10 +51,6 @@ class NotificationCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: onDelete,
-                ),
                 ...actions],
 
 

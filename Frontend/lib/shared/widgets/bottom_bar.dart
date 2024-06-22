@@ -61,7 +61,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     if(_timer != null) {
       return;
     }
-    _timer = Timer.periodic(const Duration(minutes: 1), (Timer t) async {
+    _timer = Timer.periodic(const Duration(seconds: 30), (Timer t) async {
       NotificationProvider notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
       await notificationProvider.fetchAllNotifications();
       setState(() {
@@ -160,6 +160,9 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                   ],
                 ),
                 onPressed: () {
+                  setState(() {
+                    notifications = 0;
+                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(

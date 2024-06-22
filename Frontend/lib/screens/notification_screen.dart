@@ -29,7 +29,7 @@ class NotificationScreen extends StatelessWidget {
           ),
         ),
       )
-          : Row(
+          : Column(
         children: [
           // Friend Requests Column
           if (notificationProvider.friendRequests.isNotEmpty)
@@ -131,6 +131,30 @@ class NotificationScreen extends StatelessWidget {
                               title: 'New Comment',
                               content: notification.content,
                               actions: [
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Colors.red),
+                                  onPressed: () async {
+                                    if (notification.userVerseId != null) {
+                                      var verse = await Provider.of<
+                                          VerseProvider>(
+                                          context,
+                                          listen: false)
+                                          .getVerseByUserVerseId(
+                                          notification.userVerseId
+                                              .toString());
+                                      await notificationProvider
+                                          .deleteCommentNotification(
+                                          notification.notificationId);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                CommentsScreen(
+                                                    verse: verse)),
+                                      );
+                                    }
+                                  },
+                                ),
                                 IconButton(
                                   icon: const Icon(Icons.arrow_forward),
                                   onPressed: () async {

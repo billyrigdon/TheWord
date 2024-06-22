@@ -167,7 +167,7 @@ func deleteCommentNotification(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 	notificationID := c.Param("id")
 
-	if err := db.Where("user_id = ? AND comment_id = ?", userID, notificationID).Delete(&Notification{}).Error; err != nil {
+	if err := db.Where("user_id = ? AND notification_id = ?", userID, notificationID).Delete(&Notification{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete comment notification"})
 		return
 	}
