@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:TheWord/providers/friend_provider.dart';
+import 'package:TheWord/providers/notification_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
 import 'package:TheWord/screens/chat_screen.dart';
 import 'package:TheWord/screens/notification_screen.dart';
@@ -24,22 +27,47 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
   late SettingsProvider settingsProvider;
   late FriendProvider friendProvider;
   late VerseProvider verseProvider;
-  List<dynamic> friendRequests = [];
+
+  int notifications = 0;
+  Timer? _timer;
 
   Future<void> init() async {
     await verseProvider.init();
     await friendProvider.fetchFriends();
     await friendProvider.fetchSuggestedFriends();
-    await friendProvider.fetchFriendRequests();
+
+    NotificationProvider notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    await notificationProvider.fetchAllNotifications();
     setState(() {
-      friendRequests = friendProvider.friendRequests;
       isInited = true;
+      notifications = notificationProvider.friendRequests.length + notificationProvider.commentNotifications.length;
     });
+
+    _startPeriodicNotificationFetch();
   }
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startPeriodicNotificationFetch() {
+    if(_timer != null) {
+      return;
+    }
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer t) async {
+      NotificationProvider notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      await notificationProvider.fetchAllNotifications();
+      setState(() {
+        notifications = notificationProvider.friendRequests.length + notificationProvider.commentNotifications.length;
+      });
+    });
   }
 
   @override
@@ -56,7 +84,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     MaterialColor? currentColor = settingsProvider.currentColor;
     Color? fontColor = Colors.white;
     if (currentColor != null) {
-      fontColor = settingsProvider.getFontColor(currentColor!);
+      fontColor = settingsProvider.getFontColor(currentColor);
     }
     // Define the screens associated with each index
     List<Widget> _screens = [
@@ -106,7 +134,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                 icon: Stack(
                   children: [
                     const Icon(Icons.notifications),
-                    if (friendRequests.isNotEmpty)
+                    if (notifications > 0)
                       Positioned(
                         right: 0,
                         child: Container(
@@ -120,7 +148,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                             minHeight: 12,
                           ),
                           child: Text(
-                            '${friendRequests.length}',
+                            notifications.toString(),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 8,
@@ -132,9 +160,6 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                   ],
                 ),
                 onPressed: () {
-                  setState(() {
-                    this.friendRequests = [];
-                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -161,6 +186,7 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
                   isInited = false;
                   friendProvider.reset();
                   settingsProvider.logout();
+                  _timer?.cancel();
                   Provider.of<VerseProvider>(context, listen: false).reset();
                 },
               ),

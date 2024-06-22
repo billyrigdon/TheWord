@@ -38,7 +38,7 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
       }
     } else {
       print("------------------------------------SAVING");
-      verseProvider.saveVerse(verseId, text);
+      verseProvider.saveVerse(verseId.toString(), text);
     }
   }
 
@@ -63,7 +63,7 @@ class _SelectableTextHighlightState extends State<SelectableTextHighlight> {
         return GestureDetector(
           onDoubleTap: () {
             if (!_isNumeric(verseText)) {
-              _toggleVerse(verseProvider, verseId, verseText);
+              _toggleVerse(verseProvider, verseId.toString(), verseText);
             }
           },
           child: Container(
