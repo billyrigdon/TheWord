@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 
 class FriendService {
-  final String _baseUrl = 'http://billyrigdon.dev:8110';
+  final String _baseUrl = 'http://10.0.2.2:8080';
 
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

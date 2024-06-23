@@ -25,7 +25,7 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends/requests'),
+      Uri.parse('http://10.0.2.2:8080/friends/requests'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -48,7 +48,7 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/commentRequests'), // Adjust this URL based on your actual API
+      Uri.parse('http://10.0.2.2:8080/commentRequests'), // Adjust this URL based on your actual API
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -66,7 +66,7 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   Future<void> deleteCommentNotification(int notificationId) async {
-    final url = Uri.parse('http://billyrigdon.dev:8110/notifications/comments/$notificationId');
+    final url = Uri.parse('http://10.0.2.2:8080/notifications/comments/$notificationId');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     try {
@@ -103,7 +103,7 @@ class NotificationProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/friends/requests/$userId/respond'),
+      Uri.parse('http://10.0.2.2:8080/friends/requests/$userId/respond'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ class NotificationProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/friends/$friendId'),
+      Uri.parse('http://10.0.2.2:8080/friends/$friendId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {

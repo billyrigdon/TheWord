@@ -24,7 +24,7 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends'),
+      Uri.parse('http://10.0.2.2:8080/friends'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -47,7 +47,7 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends/suggested'),
+      Uri.parse('http://10.0.2.2:8080/friends/suggested'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -66,7 +66,7 @@ class FriendProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/friends/$friendId'),
+      Uri.parse('http://10.0.2.2:8080/friends/$friendId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {

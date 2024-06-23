@@ -138,7 +138,8 @@ class _VerseCardState extends State<VerseCard> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            print('saving in verse card');
                             widget.onSaveNote(_noteController.text);
                           },
                           child: const Text('Save Note'),

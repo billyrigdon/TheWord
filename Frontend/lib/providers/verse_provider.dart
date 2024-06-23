@@ -57,7 +57,7 @@ class VerseProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verses/save'),
+        Uri.parse('http://10.0.2.2:8080/verses/save'),
         headers: {
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
@@ -65,9 +65,13 @@ class VerseProvider with ChangeNotifier {
         body: json.encode(verseData),
       );
 
+      print(response.body);
+
       if (response.statusCode == 200) {
+        print('success--------------------------------------');
         final responseBody = json.decode(response.body);
         final userVerseID = responseBody['userVerseID'];
+        print(responseBody.toString());
 
         // Update the saved verse with the actual userVerseID.
         verseEntry['UserVerseID'] = userVerseID;
@@ -91,7 +95,7 @@ class VerseProvider with ChangeNotifier {
 
   getVerseByUserVerseId(String userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token'
       },
@@ -122,7 +126,7 @@ class VerseProvider with ChangeNotifier {
 
     final currentPage = (publicVerses.length ~/ pageSize) + 1;
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/public?page=$currentPage&pageSize=$pageSize'),
+      Uri.parse('http://10.0.2.2:8080/verses/public?page=$currentPage&pageSize=$pageSize'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -146,7 +150,7 @@ class VerseProvider with ChangeNotifier {
     if (_token == null) return;
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/saved'),
+      Uri.parse('http://10.0.2.2:8080/verses/saved'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -176,7 +180,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getLikesCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -189,7 +193,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getCommentCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/comments/count'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/comments/count'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -202,7 +206,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> toggleLike(int userVerseId) async {
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -214,7 +218,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> unsaveVerse(String userVerseId) async {
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -232,7 +236,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> saveNote(String verseId, String userVerseId, String note) async {
     final existingVerse = savedVerses.firstWhere(
-          (element) => element['VerseID'] == verseId,
+          (element) => element['UserVerseID'] == userVerseId,
       orElse: () => null,
     );
 
@@ -241,7 +245,7 @@ class VerseProvider with ChangeNotifier {
     }
 
     final response = await http.put(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -259,7 +263,7 @@ class VerseProvider with ChangeNotifier {
   Future<bool> publishVerse(String userVerseId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/publish'),
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/publish'),
         headers: <String, String>{
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
@@ -283,7 +287,7 @@ class VerseProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/unpublish'),
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/unpublish'),
         headers: <String, String>{
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token', // Include the token here
