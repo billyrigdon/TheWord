@@ -10,6 +10,7 @@ class SavedVersesScreen extends StatelessWidget {
     final verseProvider = Provider.of<VerseProvider>(context);
 
     return Scaffold(
+      // appBar: AppBar(title: Text('Saved Verses')),
       body: verseProvider.savedVerses.isEmpty
           ? const Center(child: Text('No saved verses'))
           : ListView.builder(
@@ -17,10 +18,11 @@ class SavedVersesScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final verse = verseProvider.savedVerses[index];
           int userVerseId = verse['UserVerseID'];
-          bool isPublished = verse['is_published'] ?? false; // Retrieve the is_published status
+          bool isPublished = verse['is_published'] ?? false;
 
           return Dismissible(
-            key: Key(verse['VerseID']),
+            key: Key(verse['VerseID'].toString()),
+            // Ensure the key is unique and a string.
             direction: DismissDirection.endToStart,
             background: Container(
               color: Colors.red,
@@ -30,6 +32,9 @@ class SavedVersesScreen extends StatelessWidget {
             ),
             onDismissed: (direction) {
               verseProvider.unsaveVerse(userVerseId.toString());
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Verse removed')),
+              );
             },
             child: VerseCard(
               verseId: verse['VerseID'],
@@ -43,10 +48,9 @@ class SavedVersesScreen extends StatelessWidget {
               isPublished: isPublished,
               onSaveNote: (note) async {
                 try {
-                  print('onSaveNote');
                   await verseProvider.saveNote(
-                    verse['UserVerseID'].toString(),
                     verse['VerseID'].toString(),
+                    verse['UserVerseID'].toString(),
                     note,
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +64,8 @@ class SavedVersesScreen extends StatelessWidget {
               },
               onPublish: isPublished
                   ? null
-                  : (note) => _publishVerse(context, verse["VerseID"] , userVerseId, note),
+                  : (note) =>
+                  _publishVerse(context, verse["VerseID"], userVerseId, note),
               onUnpublish: isPublished
                   ? () => _unpublishVerse(context, userVerseId)
                   : null,
@@ -117,4 +122,6 @@ class SavedVersesScreen extends StatelessWidget {
     }
   }
 }
+
+
 

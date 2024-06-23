@@ -37,7 +37,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comments'),
+      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comments'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -65,7 +65,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/likes'),
+      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/likes'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -82,7 +82,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/toggle-like'),
+      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/toggle-like'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -97,7 +97,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     var token = prefs.getString('token');
     final response = await http.post(
       Uri.parse(
-          'http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comment${parentCommentID != null ? "?parentCommentID=$parentCommentID" : ""}'),
+          'http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comment${parentCommentID != null ? "?parentCommentID=$parentCommentID" : ""}'),
       headers: {'Authorization': 'Bearer $token'},
       body: json.encode({'content': content}),
     );
@@ -112,7 +112,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var token = prefs.getString('token');
     final response = await http.put(
-      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comment/$commentID'),
+      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comment/$commentID'),
       headers: {'Authorization': 'Bearer $token'},
       body: json.encode({'content': content}),
     );
@@ -127,7 +127,7 @@ class CommentsScreenState extends State<CommentsScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('http://10.0.2.2:8080/verse/${verse["UserVerseID"]}/comment/$commentID'),
+      Uri.parse('http://billyrigdon.dev:8110/verse/${verse["UserVerseID"]}/comment/$commentID'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
