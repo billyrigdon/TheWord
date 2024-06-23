@@ -41,11 +41,12 @@ class SavedVersesScreen extends StatelessWidget {
               onComment: () => _navigateToComments(context, verse),
               isSaved: true,
               isPublished: isPublished,
-              onSaveNote: (note) {
+              onSaveNote: (note) async {
                 try {
-                  verseProvider.saveNote(
-                    verse['VerseID'].toString(),
+                  print('onSaveNote');
+                  await verseProvider.saveNote(
                     verse['UserVerseID'].toString(),
+                    verse['VerseID'].toString(),
                     note,
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -56,7 +57,6 @@ class SavedVersesScreen extends StatelessWidget {
                     const SnackBar(content: Text('Verse failed to save')),
                   );
                 }
-
               },
               onPublish: isPublished
                   ? null

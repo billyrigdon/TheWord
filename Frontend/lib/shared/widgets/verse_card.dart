@@ -90,7 +90,7 @@ class _VerseCardState extends State<VerseCard> {
                     )
                   : null,
             ),
-            if (!_isExpanded && !widget.isSaved)
+            if (!_isExpanded)
               Padding(
                 padding: const EdgeInsets.only(left: 16.0, top: 16.0),
                 child: Row(
@@ -138,7 +138,8 @@ class _VerseCardState extends State<VerseCard> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            print('saving in verse card');
                             widget.onSaveNote(_noteController.text);
                           },
                           child: const Text('Save Note'),

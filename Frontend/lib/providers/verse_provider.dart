@@ -1,5 +1,3 @@
-// verse_provider.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -35,40 +33,79 @@ class VerseProvider with ChangeNotifier {
   Future<void> saveVerse(String verseId, String text, {String note = ''}) async {
     if (_token == null) return;
 
+    // Check if the verse is already saved.
+    if (savedVerses.any((verse) => verse['VerseID'] == verseId)) {
+      return;
+    }
+
+    // Add the verse to savedVerses before making the HTTP call.
+    final verseEntry = {
+      'UserVerseID': 0, // Placeholder, will be updated upon success.
+      'VerseID': verseId,
+      'Content': text,
+      'Note': note,
+    };
+
+    savedVerses.add(verseEntry);
+    notifyListeners();
+
     final verseData = {
       'VerseID': verseId,
       'Content': text,
       'Note': note,
     };
 
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/verses/save'),
-      headers: {
-        'Authorization': 'Bearer $_token',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(verseData),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/verses/save'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(verseData),
+      );
 
-    if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      final userVerseID = responseBody['userVerseID'];
-      savedVerses.add({
-        'UserVerseID': userVerseID,
-        'VerseID': verseId,
-        'Content': text,
-        'Note': note,
-      });
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        print('success--------------------------------------');
+        final responseBody = json.decode(response.body);
+        final userVerseID = responseBody['userVerseID'];
+        print(responseBody.toString());
+
+        // Update the saved verse with the actual userVerseID.
+        verseEntry['UserVerseID'] = userVerseID;
+        notifyListeners();
+      } else {
+        // If the request fails, remove the verse from savedVerses.
+        savedVerses.removeWhere((verse) => verse['VerseID'] == verseId);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Handle any exceptions and remove the verse from savedVerses.
+      savedVerses.removeWhere((verse) => verse['VerseID'] == verseId);
       notifyListeners();
-    } else {
-      print('Failed to save verse: ${response.body}');
     }
   }
+
 
   bool isVerseSaved(String verseId) {
     return savedVerses.any((verse) => verse['VerseID'] == verseId);
   }
 
+  getVerseByUserVerseId(String userVerseId) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId'),
+      headers: {
+        'Authorization': 'Bearer $_token'
+      },
+
+    );
+
+    return json.decode(response.body);
+
+  }
+  
   String? getSavedVerseUserVerseID(String verseId) {
     final savedVerse = savedVerses.firstWhere(
           (verse) => verse['VerseID'] == verseId,
@@ -94,8 +131,6 @@ class VerseProvider with ChangeNotifier {
     );
 
     if (response.statusCode == 200) {
-      print(response.body.toString());
-      print('SUCCESS');
       List newVerses = json.decode(response.body) ?? [];
       publicVerses.addAll(newVerses);
       for (var verse in newVerses) {
@@ -105,7 +140,6 @@ class VerseProvider with ChangeNotifier {
       }
       notifyListeners();
     } else {
-      print('Failed to load public verses: ${response.body}');
     }
 
     isLoading = false;
@@ -140,7 +174,6 @@ class VerseProvider with ChangeNotifier {
       }
       notifyListeners();
     } else {
-      print('Failed to load saved verses: ${response.body}');
     }
     notifyListeners();
   }
@@ -155,7 +188,6 @@ class VerseProvider with ChangeNotifier {
       likesCount[userVerseId] = json.decode(response.body)['likes_count'];
       notifyListeners();
     } else {
-      print('Failed to fetch likes count: ${response.body}');
     }
   }
 
@@ -169,7 +201,6 @@ class VerseProvider with ChangeNotifier {
       commentCount[userVerseId] = json.decode(response.body)['comment_count'];
       notifyListeners();
     } else {
-      print('Failed to fetch comments count: ${response.body}');
     }
   }
 
@@ -182,7 +213,6 @@ class VerseProvider with ChangeNotifier {
     if (response.statusCode == 200) {
       _getLikesCount(userVerseId);
     } else {
-      print('Failed to toggle like: ${response.body}');
     }
   }
 
@@ -201,18 +231,16 @@ class VerseProvider with ChangeNotifier {
       fetchPublicVerses(reset: true);
       notifyListeners();
     } else {
-      print('Failed to unsave verse: ${response.body}');
     }
   }
 
   Future<void> saveNote(String verseId, String userVerseId, String note) async {
     final existingVerse = savedVerses.firstWhere(
-          (element) => element['VerseID'] == verseId,
+          (element) => element['UserVerseID'] == userVerseId,
       orElse: () => null,
     );
 
     if (existingVerse == null) {
-      print('Verse not found for verseId: $verseId');
       return;
     }
 
@@ -229,7 +257,6 @@ class VerseProvider with ChangeNotifier {
       existingVerse['Note'] = note;
       notifyListeners();
     } else {
-      print('Failed to update note: ${response.body}');
     }
   }
 
@@ -245,16 +272,13 @@ class VerseProvider with ChangeNotifier {
           'is_published': true,
         }),
       );
-      print(response.toString());
       if (response.statusCode == 200) {
         notifyListeners();
         return true;
       } else {
-        print('Failed to publish verse: ${response.statusCode}');
         return false;
       }
     } catch (error) {
-      print('Failed to publish verse: $error');
       return false;
     }
   }
@@ -277,11 +301,9 @@ class VerseProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        print('Failed to unpublish verse: ${response.statusCode}');
         return false;
       }
     } catch (error) {
-      print('Failed to unpublish verse: $error');
       return false;
     }
   }

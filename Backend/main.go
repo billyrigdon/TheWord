@@ -98,6 +98,15 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+type Notification struct {
+	NotificationID uint      `gorm:"primaryKey"`
+	UserID         uint      `gorm:"not null"`
+	Content        string    `gorm:"not null"`
+	UserVerseID    int       `gorm:"index"`
+	CommentID      *uint     `gorm:"index"`
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+}
+
 var jwtKey = []byte("secret_key")
 
 func main() {
@@ -115,7 +124,7 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	db.AutoMigrate(&User{}, &UserVerse{}, &Like{}, &Comment{}, &Friend{})
+	db.AutoMigrate(&User{}, &UserVerse{}, &Like{}, &Comment{}, &Friend{}, &Notification{})
 	log.Println("Database tables created or already exist.")
 
 	createAdminUser()
@@ -149,8 +158,21 @@ func main() {
 	r.POST("/friends/requests/:id/respond", authMiddleware, respondFriendRequest)
 	r.POST("/verse/:id/publish", authMiddleware, publishVerse)
 	r.POST("/verse/:id/unpublish", authMiddleware, unpublishVerse)
-
+	r.GET("/commentRequests", authMiddleware, getCommentRequests)
+	r.DELETE("/notifications/comments/:id", authMiddleware, deleteCommentNotification)
 	r.Run()
+}
+
+func deleteCommentNotification(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	notificationID := c.Param("id")
+
+	if err := db.Where("user_id = ? AND notification_id = ?", userID, notificationID).Delete(&Notification{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete comment notification"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Notification deleted successfully"})
 }
 
 func getUserSettings(c *gin.Context) {
@@ -907,9 +929,26 @@ func toggleLike(c *gin.Context) {
 	}
 }
 
+func getCommentRequests(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+
+	var notifications []Notification
+	if err := db.Where("user_id = ?", userID).Find(&notifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve comment requests"})
+		return
+	}
+
+	c.JSON(http.StatusOK, notifications)
+}
+
 func addComment(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
-	userVerseID := c.Param("id")
+	userVerseIDStr := c.Param("id")
+	userVerseID, err := strconv.Atoi(userVerseIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserVerse ID"})
+		return
+	}
 
 	var comment Comment
 	if err := c.ShouldBindJSON(&comment); err != nil {
@@ -917,8 +956,9 @@ func addComment(c *gin.Context) {
 		return
 	}
 	comment.UserID = userID
-	comment.UserVerseID, _ = strconv.Atoi(userVerseID)
+	comment.UserVerseID = userVerseID
 
+	// Handle ParentCommentID
 	parentCommentIDStr := c.Query("parentCommentID")
 	if parentCommentIDStr != "" {
 		parentCommentID, err := strconv.Atoi(parentCommentIDStr)
@@ -930,13 +970,81 @@ func addComment(c *gin.Context) {
 
 	// Fetch username of the commenter
 	var user User
-	if err := db.First(&user, "user_id = ?", userID).Error; err == nil {
+	if err := db.First(&user, userID).Error; err == nil {
 		comment.Username = user.Username
 	}
 
-	db.Create(&comment)
+	// Save the comment to the database
+	if err := db.Create(&comment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
+		return
+	}
+
+	// Notification logic
+	var notification Notification
+	if comment.ParentCommentID != nil {
+		// Reply to a comment, notify the owner of the parent comment
+		var parentComment Comment
+		if err := db.First(&parentComment, *comment.ParentCommentID).Error; err == nil {
+			notification = Notification{
+				UserID:      parentComment.UserID,
+				Content:     "You have a new reply on your comment.",
+				CommentID:   &comment.CommentID,
+				UserVerseID: parentComment.UserVerseID,
+			}
+		}
+	} else {
+		// New comment on UserVerse, notify the owner of the UserVerse
+		var userVerse UserVerse
+		if err := db.First(&userVerse, userVerseID).Error; err == nil {
+			notification = Notification{
+				UserID:      userVerse.UserID,
+				Content:     "You have a new comment on your verse.",
+				CommentID:   &comment.CommentID,
+				UserVerseID: int(userVerse.UserVerseID),
+			}
+		}
+	}
+
+	// Save the notification to the database
+	if err := db.Create(&notification).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification"})
+		return
+	}
+
 	c.JSON(http.StatusOK, comment)
 }
+
+// func addComment(c *gin.Context) {
+// 	userID := c.MustGet("userID").(uint)
+// 	userVerseID := c.Param("id")
+
+// 	var comment Comment
+// 	if err := c.ShouldBindJSON(&comment); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	comment.UserID = userID
+// 	comment.UserVerseID, _ = strconv.Atoi(userVerseID)
+
+// 	parentCommentIDStr := c.Query("parentCommentID")
+// 	if parentCommentIDStr != "" {
+// 		parentCommentID, err := strconv.Atoi(parentCommentIDStr)
+// 		if err == nil {
+// 			parentCommentIDUint := uint(parentCommentID)
+// 			comment.ParentCommentID = &parentCommentIDUint
+// 		}
+// 	}
+
+// 	// Fetch username of the commenter
+// 	var user User
+// 	if err := db.First(&user, "user_id = ?", userID).Error; err == nil {
+// 		comment.Username = user.Username
+// 	}
+
+// 	db.Create(&comment)
+// 	c.JSON(http.StatusOK, comment)
+// }
 
 func updateComment(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)

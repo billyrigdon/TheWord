@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:TheWord/providers/bible_provider.dart';
 import 'package:TheWord/providers/friend_provider.dart';
+import 'package:TheWord/providers/notification_provider.dart';
 import 'package:TheWord/providers/settings_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
 import 'package:TheWord/shared/widgets/bottom_bar.dart';
@@ -21,6 +22,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
         ChangeNotifierProvider(create: (context) => BibleProvider()),
+        ChangeNotifierProvider(create: (context) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => VerseProvider()),
       ],

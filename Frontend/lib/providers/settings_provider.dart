@@ -170,7 +170,6 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> fetchUserSettingsFromBackend(String token) async {
     final settings = await settingsService.fetchUserSettings(token);
-    print(settings.toString());
     if (settings != null) {
       _currentColor = _parseColor(settings['primary_color']);
       _highlightColor = _parseColor(settings['highlight_color']);
@@ -185,14 +184,11 @@ class SettingsProvider with ChangeNotifier {
     if (_translations.isEmpty) {
       List<dynamic> fetchedTranslations = await settingsService.fetchTranslations();
 
-      // Use a set to track unique names and filter duplicates
       Set<String> seenNames = {};
       _translations = [];
 
-      List<String> duplicateTracker = [];
       for (dynamic translation in fetchedTranslations) {
         String name = (translation["name"] as String).toLowerCase();
-        print(name);
         if (!seenNames.contains(name)) {
           seenNames.add(name);
           fetchedTranslations.add(translation);
@@ -229,7 +225,6 @@ class SettingsProvider with ChangeNotifier {
   }
 
   void updateHighlightColor(MaterialColor color) {
-    print(color.value);
     _highlightColor = color;
     settingsService.saveHighlightColor(color);
     notifyListeners();
