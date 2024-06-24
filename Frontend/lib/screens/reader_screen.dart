@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
@@ -40,7 +42,7 @@ class ReaderScreenState extends State<ReaderScreen> {
   bool isPaused = false;
   bool isSkipping = false;
   ChatService chatService = ChatService(); // Initialize ChatService
-
+  int currentPageIndex = 1;
   @override
   void initState() {
     super.initState();
@@ -308,6 +310,7 @@ class ReaderScreenState extends State<ReaderScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+
     return Scaffold(
       appBar: AppBar(
         title: Text(chapterName),
@@ -350,6 +353,7 @@ class ReaderScreenState extends State<ReaderScreen> {
                       widget.chapterId = currentChapterId;
                       chapterName = currentChapterName;
                       currentVerseIndex = 0;
+                      currentPageIndex = index;
                     });
                     if (isReading) {
                       _resumeReading();
@@ -400,6 +404,113 @@ class ReaderScreenState extends State<ReaderScreen> {
             ),
         ],
       ),
+      // bottomNavigationBar: BottomAppBar(
+      //   padding: EdgeInsets.zero,
+      //   // height: 60,
+      //   color: theme.primaryColor,
+      //   child:  Row(
+      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+      //     children: <Widget>[
+      //       Column(
+      //         mainAxisSize: MainAxisSize.min,
+      //         children: [
+      //           IconButton(
+      //             icon: Icon(Icons.bookmark),
+      //             style: ButtonStyle(),
+      //             onPressed: () {
+      //               // Add action for Saved button here
+      //               print('Saved verses pressed');
+      //             },
+      //             tooltip: 'Saved',
+      //           ),
+      //           Text(
+      //             'Saved',
+      //             style: TextStyle(fontSize: 12),
+      //           ),
+      //         ],
+      //       ),
+      //       IconButton(
+      //         icon: Icon(
+      //           Icons.arrow_circle_left,
+      //           size: 40, // Slightly larger icon
+      //         ),
+      //         onPressed: () {
+      //           if (isReading) {
+      //             flutterTts.stop();
+      //           }
+      //           setState(() {
+      //             currentPageIndex = currentPageIndex > 0 ? currentPageIndex - 1 : currentPageIndex;
+      //           });
+      //           final currentChapterId = widget.chapterIds[currentPageIndex];
+      //           final currentChapterName = widget.chapterNames[currentPageIndex];
+      //           _fetchChapterContent(currentChapterId);
+      //           setState(() {
+      //             widget.chapterId = currentChapterId;
+      //             chapterName = currentChapterName;
+      //             currentVerseIndex = 0;
+      //
+      //           });
+      //           if (isReading) {
+      //             _resumeReading();
+      //           }
+      //
+      //           // Add action for right arrow button here
+      //           print('Right arrow button pressed');
+      //           print('Left arrow button pressed');
+      //         },
+      //         tooltip: '',
+      //       ),
+      //       Text(chapterName),
+      //       IconButton(
+      //         icon: Icon(
+      //           Icons.arrow_circle_right,
+      //           size: 40, // Slightly larger icon
+      //
+      //         ),
+      //         onPressed: () {
+      //           if (isReading) {
+      //             flutterTts.stop();
+      //           }
+      //           setState(() {
+      //             currentPageIndex = currentPageIndex > widget.chapterIds.length?  currentPageIndex + 1  : currentPageIndex;
+      //           });
+      //           final currentChapterId = widget.chapterIds[currentPageIndex];
+      //           final currentChapterName = widget.chapterNames[currentPageIndex];
+      //           _fetchChapterContent(currentChapterId);
+      //           setState(() {
+      //             widget.chapterId = currentChapterId;
+      //             chapterName = currentChapterName;
+      //             currentVerseIndex = 0;
+      //
+      //           });
+      //           if (isReading) {
+      //             _resumeReading();
+      //           }
+      //
+      //           // Add action for right arrow button here
+      //           print('Right arrow button pressed');
+      //         },
+      //         tooltip: '',
+      //       ),
+      //       Column(
+      //         mainAxisSize: MainAxisSize.min,
+      //         children: [
+      //           IconButton(
+      //             icon: Icon(Icons.summarize),
+      //             onPressed: () {
+      //               _summarizeContent();
+      //             },
+      //             tooltip: 'Summarize',
+      //           ),
+      //           Text(
+      //             'Summarize',
+      //             style: TextStyle(fontSize: 12),
+      //           ),
+      //         ],
+      //       ),
+      //     ]
+      //   ),
+      // ),
     );
   }
 }

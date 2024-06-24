@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:TheWord/providers/bible_provider.dart';
 import 'package:TheWord/providers/friend_provider.dart';
 import 'package:TheWord/providers/notification_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
@@ -8,20 +9,22 @@ import 'package:TheWord/screens/notification_screen.dart';
 import 'package:TheWord/screens/public_verses.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/settings_provider.dart';
-import '../../screens/book_list.dart';
-import '../../screens/login_screen.dart';
-import '../../screens/registration_screen.dart';
-import '../../screens/saved_verses.dart';
-import '../../screens/friend_list_screen.dart';
-import '../../screens/settings_screen.dart';
+import '../providers/settings_provider.dart';
+import 'book_list.dart';
+import 'login_screen.dart';
+import 'registration_screen.dart';
+import 'saved_verses.dart';
+import 'friend_list_screen.dart';
+import 'settings_screen.dart';
+import '../shared/widgets/dynamic_search_bar.dart';
 
-class BottomBarNavigation extends StatefulWidget {
+//42 * 5
+class MainAppScreen extends StatefulWidget {
   @override
-  _BottomBarNavigationState createState() => _BottomBarNavigationState();
+  _MainAppScreenState createState() => _MainAppScreenState();
 }
 
-class _BottomBarNavigationState extends State<BottomBarNavigation> {
+class _MainAppScreenState extends State<MainAppScreen> {
   int _currentIndex = 0;
   bool isInited = false;
   late SettingsProvider settingsProvider;
@@ -36,11 +39,13 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
     await friendProvider.fetchFriends();
     await friendProvider.fetchSuggestedFriends();
 
-    NotificationProvider notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    NotificationProvider notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
     await notificationProvider.fetchAllNotifications();
     setState(() {
       isInited = true;
-      notifications = notificationProvider.friendRequests.length + notificationProvider.commentNotifications.length;
+      notifications = notificationProvider.friendRequests.length +
+          notificationProvider.commentNotifications.length;
     });
 
     _startPeriodicNotificationFetch();
@@ -58,14 +63,16 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
   }
 
   void _startPeriodicNotificationFetch() {
-    if(_timer != null) {
+    if (_timer != null) {
       return;
     }
     _timer = Timer.periodic(const Duration(seconds: 30), (Timer t) async {
-      NotificationProvider notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      NotificationProvider notificationProvider =
+          Provider.of<NotificationProvider>(context, listen: false);
       await notificationProvider.fetchAllNotifications();
       setState(() {
-        notifications = notificationProvider.friendRequests.length + notificationProvider.commentNotifications.length;
+        notifications = notificationProvider.friendRequests.length +
+            notificationProvider.commentNotifications.length;
       });
     });
   }
@@ -101,205 +108,169 @@ class _BottomBarNavigationState extends State<BottomBarNavigation> {
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: currentColor,
-          automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Logo on the left
-              // Container(
-              //   child: Image.asset(
-              //     'assets/icon/app_icon.png', // Update with your logo path
-              //     height: 40,
-              //     width: 40,
-              //   ),
-              // ),
-              // Search bar in the center
-              // Expanded(
-              //   child: Container(
-              //     margin: const EdgeInsets.symmetric(horizontal: 20),
-              //     child: TextField(
-              //       decoration: InputDecoration(
-              //         hintText: 'Search...',
-              //         hintStyle: TextStyle(color: fontColor?.withOpacity(0.6)),
-              //         prefixIcon: Icon(Icons.search, color: fontColor),
-              //         filled: true,
-              //         fillColor: fontColor?.withOpacity(0.1),
-              //         border: OutlineInputBorder(
-              //           borderRadius: BorderRadius.circular(30),
-              //           borderSide: BorderSide.none,
-              //         ),
-              //         contentPadding: EdgeInsets.symmetric(vertical: 0),
-              //       ),
-              //       style: TextStyle(color: fontColor),
-              //     ),
-              //   ),
-              // ),
-              // Action icons on the right
-              Row(
-                children: [
-                  if (!settingsProvider.isLoggedIn)
-                    IconButton(
-                      color: fontColor,
-                      icon: const Icon(Icons.login),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginScreen()),
-                        );
-                      },
-                    ),
-                  if (!settingsProvider.isLoggedIn)
-                    IconButton(
-                      color: fontColor,
-                      icon: const Icon(Icons.app_registration),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => RegistrationScreen()),
-                        );
-                      },
-                    ),
-                  if (settingsProvider.isLoggedIn)
-                    IconButton(
-                      color: fontColor,
-                      icon: Stack(
-                        children: [
-                          const Icon(Icons.notifications),
-                          if (notifications > 0)
-                            Positioned(
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(1),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 12,
-                                  minHeight: 12,
-                                ),
-                                child: Text(
-                                  notifications.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 8,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(72),
+          child: AppBar(
+            backgroundColor: currentColor,
+            automaticallyImplyLeading: false,
+            flexibleSpace: Center(
+              child: Container(
+                padding: EdgeInsets.only(top: 36, left: 12),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        child: Image.asset(
+                          'assets/icon/app_icon.png', // Update with your logo path
+                          height: 60,
+                          width: 60,
+                        ),
+                      ),
+                      if (_currentIndex == 0)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 14.0),
+                            child: SizedBox(
+                              height: 36,
+                              child: DynamicSearchBar(
+                                data: Provider.of<BibleProvider>(context,
+                                        listen: false)
+                                    .books, // Pass the dynamic data here
+                                searchType: SearchType
+                                    .BibleBooks, // Choose the appropriate search type
+                                fontColor: fontColor,
                               ),
                             ),
-                        ],
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          notifications = 0;
-                        });
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NotificationScreen(),
                           ),
-                        );
-                      },
-                    ),
-                  IconButton(
-                    color: fontColor,
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SettingsScreen()),
-                      );
-                    },
+                        ),
+                      // Spacer(), // Add another spacer for even spacing
+                      Row( children: [
+                      if (!settingsProvider.isLoggedIn)
+                        IconButton(
+                          color: fontColor,
+                          icon: const Icon(Icons.login),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginScreen()),
+                            );
+                          },
+                        ),
+                      if (!settingsProvider.isLoggedIn)
+                        IconButton(
+                          color: fontColor,
+                          icon: const Icon(Icons.app_registration),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => RegistrationScreen()),
+                            );
+                          },
+                        ),
+                      IconButton(
+                        color: fontColor,
+                        icon: const Icon(Icons.settings),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SettingsScreen()),
+                          );
+                        },
+                      ),
+                      if (settingsProvider.isLoggedIn)
+                        IconButton(
+                          color: fontColor,
+                          icon: const Icon(Icons.logout),
+                          onPressed: () {
+                            isInited = false;
+                            friendProvider.reset();
+                            settingsProvider.logout();
+                            _timer?.cancel();
+                            Provider.of<VerseProvider>(context, listen: false)
+                                .reset();
+                          },
+                        ),
+                      ],
+                      ),
+                    ],
                   ),
-                  if (settingsProvider.isLoggedIn)
-                    IconButton(
-                      color: fontColor,
-                      icon: const Icon(Icons.logout),
-                      onPressed: () {
-                        isInited = false;
-                        friendProvider.reset();
-                        settingsProvider.logout();
-                        _timer?.cancel();
-                        Provider.of<VerseProvider>(context, listen: false).reset();
-                      },
-                    ),
-                ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
         body: settingsProvider.isLoggedIn
             ? IndexedStack(
-          index: _currentIndex,
-          children: _screens,
-        )
+                index: _currentIndex,
+                children: _screens,
+              )
             : BookListScreen(), // Display only the BookListScreen if not logged in
         bottomNavigationBar: settingsProvider.isLoggedIn
             ? Theme(
-          data: ThemeData(
-            canvasColor: currentColor, // Set canvasColor to currentColor
-          ),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.book,
-                  color: fontColor,
+                data: ThemeData(
+                  canvasColor: currentColor, // Set canvasColor to currentColor
                 ),
-                label: 'Bible',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.explore,
-                  color: fontColor,
+                child: BottomNavigationBar(
+                  type: BottomNavigationBarType.fixed,
+                  currentIndex: _currentIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.book,
+                        color: fontColor,
+                      ),
+                      label: 'Bible',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.explore,
+                        color: fontColor,
+                      ),
+                      label: 'Explore',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.home,
+                        color: fontColor,
+                      ),
+                      label: 'My Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.group,
+                        color: fontColor,
+                      ),
+                      label: 'Friends',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.chat,
+                        color: fontColor,
+                      ),
+                      label: 'Ask Archie',
+                    ),
+                  ],
+                  selectedItemColor: _getContrastingTextColor(
+                      currentColor ?? createMaterialColor(Colors.black)),
+                  unselectedItemColor: _getContrastingTextColor(
+                          currentColor ?? createMaterialColor(Colors.black))
+                      .withOpacity(0.6),
+                  showUnselectedLabels: true,
                 ),
-                label: 'Explore',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.home,
-                  color: fontColor,
-                ),
-                label: 'My Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.group,
-                  color: fontColor,
-                ),
-                label: 'Friends',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.chat,
-                  color: fontColor,
-                ),
-                label: 'Ask Archie',
-              ),
-            ],
-            selectedItemColor: _getContrastingTextColor(
-                currentColor ?? createMaterialColor(Colors.black)),
-            unselectedItemColor: _getContrastingTextColor(
-                currentColor ?? createMaterialColor(Colors.black))
-                .withOpacity(0.6),
-            showUnselectedLabels: true,
-          ),
-        )
+              )
             : null, // No bottom bar if not logged in
       ),
     );
   }
-
   // @override
   // Widget build(BuildContext context) {
   //   settingsProvider = Provider.of<SettingsProvider>(context);
