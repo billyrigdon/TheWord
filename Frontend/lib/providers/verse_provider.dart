@@ -57,7 +57,7 @@
 //
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://billyrigdon.dev:8110/verses/save'),
+//         Uri.parse('http://10.0.2.2:8080/verses/save'),
 //         headers: {
 //           'Authorization': 'Bearer $_token',
 //           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@
 //
 //   Future<dynamic> getVerseByUserVerseId(String userVerseId) async {
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId'),
 //       headers: {
 //         'Authorization': 'Bearer $_token'
 //       },
@@ -126,7 +126,7 @@
 //
 //     final currentPage = (publicVerses.length ~/ pageSize) + 1;
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verses/public?page=$currentPage&pageSize=$pageSize'),
+//       Uri.parse('http://10.0.2.2:8080/verses/public?page=$currentPage&pageSize=$pageSize'),
 //       headers: {'Authorization': 'Bearer $_token'},
 //     );
 //
@@ -150,7 +150,7 @@
 //     if (_token == null) return;
 //
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verses/saved'),
+//       Uri.parse('http://10.0.2.2:8080/verses/saved'),
 //       headers: {'Authorization': 'Bearer $_token'},
 //     );
 //
@@ -180,7 +180,7 @@
 //
 //   Future<void> _getLikesCount(int userVerseId) async {
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'),
 //       headers: {'Authorization': 'Bearer $_token'},
 //     );
 //
@@ -193,7 +193,7 @@
 //
 //   Future<void> _getCommentCount(int userVerseId) async {
 //     final response = await http.get(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/comments/count'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/comments/count'),
 //       headers: {'Authorization': 'Bearer $_token'},
 //     );
 //
@@ -206,7 +206,7 @@
 //
 //   Future<void> toggleLike(int userVerseId) async {
 //     final response = await http.post(
-//       Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+//       Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
 //       headers: {'Authorization': 'Bearer $_token'},
 //     );
 //
@@ -218,7 +218,7 @@
 //
 //   Future<void> unsaveVerse(String userVerseId) async {
 //     final response = await http.delete(
-//       Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+//       Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
 //       headers: {
 //         'Authorization': 'Bearer $_token',
 //         'Content-Type': 'application/json',
@@ -245,7 +245,7 @@
 //     }
 //
 //     final response = await http.put(
-//       Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+//       Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
 //       headers: {
 //         'Authorization': 'Bearer $_token',
 //         'Content-Type': 'application/json',
@@ -263,7 +263,7 @@
 //   Future<bool> publishVerse(String userVerseId) async {
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/publish'),
+//         Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/publish'),
 //         headers: <String, String>{
 //           'Authorization': 'Bearer $_token',
 //           'Content-Type': 'application/json',
@@ -287,7 +287,7 @@
 //
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/unpublish'),
+//         Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/unpublish'),
 //         headers: <String, String>{
 //           'Content-Type': 'application/json',
 //           'Authorization': 'Bearer $_token', // Include the token here
@@ -309,6 +309,7 @@
 //   }
 //
 // }
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -328,7 +329,7 @@ class VerseProvider with ChangeNotifier {
   final int _pageSize = 10;
 
   VerseProvider() {
-    init();
+    // init();
   }
 
   Future<void> init() async {
@@ -378,7 +379,7 @@ class VerseProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verses/save'),
+        Uri.parse('http://10.0.2.2:8080/verses/save'),
         headers: {
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
@@ -411,7 +412,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<dynamic> getVerseByUserVerseId(String userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
       },
@@ -429,19 +430,21 @@ class VerseProvider with ChangeNotifier {
   }
 
   Future<void> fetchPublicVerses({bool reset = false}) async {
-    if (isLoading || !_hasMorePublicVerses) return;
-
-    isLoading = true;
-    notifyListeners();
-
     if (reset) {
       publicVerses = [];
       _publicVersesPage = 1;
       _hasMorePublicVerses = true;
     }
 
+    if (isLoading || !_hasMorePublicVerses) return;
+
+    isLoading = true;
+    notifyListeners();
+
+
+
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/public?page=$_publicVersesPage&pageSize=$_pageSize'),
+      Uri.parse('http://10.0.2.2:8080/verses/public?page=$_publicVersesPage&pageSize=$_pageSize'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -464,22 +467,23 @@ class VerseProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchSavedVerses({bool reset = false}) async {
-    if (isLoading || !hasMoreSavedVerses) return;
-
-    if (_token == null) return;
-
-    isLoading = true;
-    notifyListeners();
-
+  Future<void> fetchSavedVerses({bool reset = false, bool loading = true}) async {
     if (reset) {
       savedVerses = [];
       _savedVersesPage = 1;
       hasMoreSavedVerses = true;
     }
+    if (isLoading || !hasMoreSavedVerses) return;
+
+    if (_token == null) return;
+
+    if (loading = true)  isLoading = true;
+    notifyListeners();
+
+
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verses/saved?page=$_savedVersesPage&pageSize=$_pageSize'),
+      Uri.parse('http://10.0.2.2:8080/verses/saved?page=$_savedVersesPage&pageSize=$_pageSize'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -504,7 +508,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getLikesCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/likes'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/likes'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -516,7 +520,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> _getCommentCount(int userVerseId) async {
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/comments/count'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/comments/count'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -528,7 +532,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> toggleLike(int userVerseId) async {
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/toggle-like'),
+      Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/toggle-like'),
       headers: {'Authorization': 'Bearer $_token'},
     );
 
@@ -539,7 +543,7 @@ class VerseProvider with ChangeNotifier {
 
   Future<void> unsaveVerse(String userVerseId) async {
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -548,7 +552,7 @@ class VerseProvider with ChangeNotifier {
 
     if (response.statusCode == 200) {
       savedVerses.removeWhere((verse) => verse['UserVerseID'] == int.parse(userVerseId));
-      fetchSavedVerses(reset: true);
+      // fetchSavedVerses(reset: true);
       fetchPublicVerses(reset: true);
       notifyListeners();
     }
@@ -565,7 +569,7 @@ class VerseProvider with ChangeNotifier {
     }
 
     final response = await http.put(
-      Uri.parse('http://billyrigdon.dev:8110/verses/$userVerseId'),
+      Uri.parse('http://10.0.2.2:8080/verses/$userVerseId'),
       headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -579,10 +583,19 @@ class VerseProvider with ChangeNotifier {
     }
   }
 
+  void updateVersePublishStatus(int userVerseId, bool isPublished) {
+    final index = savedVerses.indexWhere((verse) => verse['UserVerseID'] == userVerseId);
+    if (index != -1) {
+      savedVerses[index]['is_published'] = isPublished;
+      notifyListeners();
+    }
+  }
+
+
   Future<bool> publishVerse(String userVerseId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/publish'),
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/publish'),
         headers: <String, String>{
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
@@ -605,7 +618,7 @@ class VerseProvider with ChangeNotifier {
   Future<bool> unpublishVerse(String userVerseId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://billyrigdon.dev:8110/verse/$userVerseId/unpublish'),
+        Uri.parse('http://10.0.2.2:8080/verse/$userVerseId/unpublish'),
         headers: <String, String>{
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
@@ -625,4 +638,90 @@ class VerseProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> searchSavedVerses(String query, {bool reset = false}) async {
+    if (_token == null || isLoading) return;
+
+    print('query');
+
+    if (reset) {
+      savedVerses = [];
+      _savedVersesPage = 1;
+      hasMoreSavedVerses = true;
+    }
+
+    isLoading = true;
+    notifyListeners();
+
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/verses/saved/search?q=$query&page=$_savedVersesPage&pageSize=$_pageSize'),
+      headers: {
+        'Authorization': 'Bearer $_token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> newVerses = json.decode(response.body) ?? [];
+      if (newVerses.length < _pageSize) {
+        hasMoreSavedVerses = false;
+      }
+      savedVerses.addAll(newVerses);
+      _savedVersesPage++;
+      for (var verse in newVerses) {
+        int userVerseId = verse['UserVerseID'];
+        _getLikesCount(userVerseId);
+        _getCommentCount(userVerseId);
+      }
+      notifyListeners();
+    } else {
+      // Handle the error response
+      notifyListeners();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+
+  Future<void> searchPublicVerses(String query, {bool reset = false}) async {
+    if (_token == null || isLoading) return;
+
+    if (true) {
+      publicVerses = [];
+      _publicVersesPage = 1;
+      _hasMorePublicVerses = true;
+    }
+
+    isLoading = true;
+    notifyListeners();
+
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/verses/public/search?q=$query&page=$_publicVersesPage&pageSize=$_pageSize'),
+      headers: {
+        'Authorization': 'Bearer $_token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> newVerses = json.decode(response.body) ?? [];
+      if (newVerses.length < _pageSize) {
+        _hasMorePublicVerses = false;
+      }
+      publicVerses.addAll(newVerses);
+      _publicVersesPage++;
+      for (var verse in newVerses) {
+        int userVerseId = verse['UserVerseID'];
+        _getLikesCount(userVerseId);
+        _getCommentCount(userVerseId);
+      }
+      notifyListeners();
+    } else {
+      // Handle the error response
+      notifyListeners();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
 }

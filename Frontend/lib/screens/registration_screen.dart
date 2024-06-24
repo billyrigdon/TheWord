@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../providers/settings_provider.dart';
-import 'bottom_bar.dart';
+import 'main_app.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -21,7 +21,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<bool> _login() async {
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/login'),
+      Uri.parse('http://10.0.2.2:8080/login'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -58,7 +58,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/register'),
+      Uri.parse('http://10.0.2.2:8080/register'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

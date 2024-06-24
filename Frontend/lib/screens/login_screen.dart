@@ -1,11 +1,12 @@
 import 'package:TheWord/providers/settings_provider.dart';
 import 'package:TheWord/screens/registration_screen.dart';
-import 'package:TheWord/screens/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'main_app.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -18,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     final response = await http.post(
-      Uri.parse('http://billyrigdon.dev:8110/login'),
+      Uri.parse('http://10.0.2.2:8080/login'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

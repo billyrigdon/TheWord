@@ -1,29 +1,61 @@
+import 'dart:async'; // Import the async library
 import 'package:TheWord/providers/bible_provider.dart';
+import 'package:TheWord/providers/friend_provider.dart';
+import 'package:TheWord/providers/verse_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// Define an enum for the different screen types
 enum SearchType { BibleBooks, PublicVerses, SavedVerses, Friends, Settings }
 
-class DynamicSearchBar extends StatelessWidget {
-  final List<dynamic> data;
+class DynamicSearchBar extends StatefulWidget {
   final SearchType searchType;
   final Color? fontColor;
 
   DynamicSearchBar({
-    required this.data,
     required this.searchType,
     this.fontColor,
   });
 
-  _filterMethod(context, filterString) {
-    if (searchType == SearchType.BibleBooks) {
-      Provider.of<BibleProvider>(context, listen: false).filterBooks(filterString);
+  @override
+  _DynamicSearchBarState createState() => _DynamicSearchBarState();
+}
+
+class _DynamicSearchBarState extends State<DynamicSearchBar> {
+  Timer? _debounce;
+
+  void _filterMethod(context, filterString) {
+    if (widget.searchType == SearchType.BibleBooks) {
+      Provider.of<BibleProvider>(context, listen: false)
+          .filterBooks(filterString);
+    }
+    if (widget.searchType == SearchType.PublicVerses) {
+      Provider.of<VerseProvider>(context, listen: false)
+          .searchPublicVerses(filterString, reset: true);
+    }
+    if (widget.searchType == SearchType.SavedVerses) {
+      Provider.of<VerseProvider>(context, listen: false)
+          .searchSavedVerses(filterString, reset: true);
+    }
+    if (widget.searchType == SearchType.Friends) {
+      Provider.of<FriendProvider>(context, listen: false).searchFriends(filterString);
     }
   }
 
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _filterMethod(context, query);
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
+  }
+
   String _getPlaceholderText() {
-    switch (searchType) {
+    switch (widget.searchType) {
       case SearchType.BibleBooks:
         return 'Search Bible books...';
       case SearchType.PublicVerses:
@@ -45,22 +77,25 @@ class DynamicSearchBar extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 0),
         child: TextField(
-          decoration: InputDecoration(
-            hintText: _getPlaceholderText(),
-            hintStyle: TextStyle(color: fontColor?.withOpacity(0.6)),
-            prefixIcon: Icon(Icons.search, color: fontColor),
-            filled: true,
-            fillColor: fontColor?.withOpacity(0.2),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.only(left:8)
-          ),
-          onChanged: (filterString) {
-            _filterMethod(context,filterString);
+          onTapOutside: (e) {
+            FocusManager.instance.primaryFocus?.unfocus();
           },
-          style: TextStyle(color: fontColor, fontSize: 16),
+          decoration: InputDecoration(
+              hintText: _getPlaceholderText(),
+              hintStyle: TextStyle(color: widget.fontColor?.withOpacity(0.6)),
+              prefixIcon: Icon(Icons.search, color: widget.fontColor),
+              filled: true,
+              fillColor: widget.fontColor?.withOpacity(0.2),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.only(left: 8)),
+          onChanged: (filterString) {
+            print(filterString);
+            _onSearchChanged(filterString); // Use the debounced search function
+          },
+          style: TextStyle(color: widget.fontColor, fontSize: 16),
         ),
       ),
     );

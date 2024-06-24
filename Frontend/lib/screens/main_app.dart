@@ -134,11 +134,50 @@ class _MainAppScreenState extends State<MainAppScreen> {
                             child: SizedBox(
                               height: 36,
                               child: DynamicSearchBar(
-                                data: Provider.of<BibleProvider>(context,
-                                        listen: false)
-                                    .books, // Pass the dynamic data here
                                 searchType: SearchType
                                     .BibleBooks, // Choose the appropriate search type
+                                fontColor: fontColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_currentIndex == 1)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 14.0),
+                            child: SizedBox(
+                              height: 36,
+                              child: DynamicSearchBar(
+                                searchType: SearchType
+                                    .PublicVerses, // Choose the appropriate search type
+                                fontColor: fontColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_currentIndex == 2)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 14.0),
+                            child: SizedBox(
+                              height: 36,
+                              child: DynamicSearchBar(
+                                searchType: SearchType
+                                    .SavedVerses, // Choose the appropriate search type
+                                fontColor: fontColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_currentIndex == 3)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 14.0),
+                            child: SizedBox(
+                              height: 36,
+                              child: DynamicSearchBar(// Pass the dynamic data here
+                                searchType: SearchType
+                                    .Friends, // Choose the appropriate search type
                                 fontColor: fontColor,
                               ),
                             ),
@@ -271,199 +310,6 @@ class _MainAppScreenState extends State<MainAppScreen> {
       ),
     );
   }
-  // @override
-  // Widget build(BuildContext context) {
-  //   settingsProvider = Provider.of<SettingsProvider>(context);
-  //   friendProvider = Provider.of<FriendProvider>(context, listen: false);
-  //   verseProvider = Provider.of<VerseProvider>(context, listen: false);
-  //
-  //   if (settingsProvider.isLoggedIn && !isInited) {
-  //     this.init();
-  //   }
-  //
-  //   // Get current color from settings
-  //   MaterialColor? currentColor = settingsProvider.currentColor;
-  //   Color? fontColor = Colors.white;
-  //   if (currentColor != null) {
-  //     fontColor = settingsProvider.getFontColor(currentColor);
-  //   }
-  //   // Define the screens associated with each index
-  //   List<Widget> _screens = [
-  //     BookListScreen(),
-  //     PublicVersesScreen(),
-  //     SavedVersesScreen(),
-  //     FriendListScreen(),
-  //     ChatScreen(),
-  //   ];
-  //
-  //   return WillPopScope(
-  //     onWillPop: () async {
-  //       return false;
-  //     },
-  //     child: Scaffold(
-  //       appBar: AppBar(
-  //         title: const Text('The Word'),
-  //         backgroundColor: currentColor,
-  //         automaticallyImplyLeading: false,
-  //         actions: [
-  //           if (!settingsProvider.isLoggedIn)
-  //             IconButton(
-  //               color: fontColor,
-  //               icon: const Icon(Icons.login),
-  //               onPressed: () {
-  //                 Navigator.push(
-  //                   context,
-  //                   MaterialPageRoute(builder: (context) => LoginScreen()),
-  //                 );
-  //               },
-  //             ),
-  //           if (!settingsProvider.isLoggedIn)
-  //             IconButton(
-  //               color: fontColor,
-  //               icon: const Icon(Icons.app_registration),
-  //               onPressed: () {
-  //                 Navigator.push(
-  //                   context,
-  //                   MaterialPageRoute(
-  //                       builder: (context) => RegistrationScreen()),
-  //                 );
-  //               },
-  //             ),
-  //           if (settingsProvider.isLoggedIn)
-  //             IconButton(
-  //               color: fontColor,
-  //               icon: Stack(
-  //                 children: [
-  //                   const Icon(Icons.notifications),
-  //                   if (notifications > 0)
-  //                     Positioned(
-  //                       right: 0,
-  //                       child: Container(
-  //                         padding: const EdgeInsets.all(1),
-  //                         decoration: BoxDecoration(
-  //                           color: Colors.red,
-  //                           borderRadius: BorderRadius.circular(6),
-  //                         ),
-  //                         constraints: const BoxConstraints(
-  //                           minWidth: 12,
-  //                           minHeight: 12,
-  //                         ),
-  //                         child: Text(
-  //                           notifications.toString(),
-  //                           style: const TextStyle(
-  //                             color: Colors.white,
-  //                             fontSize: 8,
-  //                           ),
-  //                           textAlign: TextAlign.center,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                 ],
-  //               ),
-  //               onPressed: () {
-  //                 setState(() {
-  //                   notifications = 0;
-  //                 });
-  //                 Navigator.push(
-  //                   context,
-  //                   MaterialPageRoute(
-  //                     builder: (context) => NotificationScreen(),
-  //                   ),
-  //                 );
-  //               },
-  //             ),
-  //           IconButton(
-  //             color: fontColor,
-  //             icon: const Icon(Icons.settings),
-  //             onPressed: () {
-  //               Navigator.push(
-  //                 context,
-  //                 MaterialPageRoute(builder: (context) => SettingsScreen()),
-  //               );
-  //             },
-  //           ),
-  //           if (settingsProvider.isLoggedIn)
-  //             IconButton(
-  //               color: fontColor,
-  //               icon: const Icon(Icons.logout),
-  //               onPressed: () {
-  //                 isInited = false;
-  //                 friendProvider.reset();
-  //                 settingsProvider.logout();
-  //                 _timer?.cancel();
-  //                 Provider.of<VerseProvider>(context, listen: false).reset();
-  //               },
-  //             ),
-  //         ],
-  //       ),
-  //       body: settingsProvider.isLoggedIn
-  //           ? IndexedStack(
-  //               index: _currentIndex,
-  //               children: _screens,
-  //             )
-  //           : BookListScreen(), // Display only the BookListScreen if not logged in
-  //       bottomNavigationBar: settingsProvider.isLoggedIn
-  //           ? Theme(
-  //               data: ThemeData(
-  //                 canvasColor: currentColor, // Set canvasColor to currentColor
-  //               ),
-  //               child: BottomNavigationBar(
-  //                 type: BottomNavigationBarType.fixed,
-  //                 currentIndex: _currentIndex,
-  //                 onTap: (index) {
-  //                   setState(() {
-  //                     _currentIndex = index;
-  //                   });
-  //                 },
-  //                 items: [
-  //                   BottomNavigationBarItem(
-  //                     icon: Icon(
-  //                       Icons.book,
-  //                       color: fontColor,
-  //                     ),
-  //                     label: 'Bible',
-  //                   ),
-  //                   BottomNavigationBarItem(
-  //                     icon: Icon(
-  //                       Icons.explore,
-  //                       color: fontColor,
-  //                     ),
-  //                     label: 'Explore',
-  //                   ),
-  //                   BottomNavigationBarItem(
-  //                     icon: Icon(
-  //                       Icons.home,
-  //                       color: fontColor,
-  //                     ),
-  //                     label: 'My Home',
-  //                   ),
-  //                   BottomNavigationBarItem(
-  //                     icon: Icon(
-  //                       Icons.group,
-  //                       color: fontColor,
-  //                     ),
-  //                     label: 'Friends',
-  //                   ),
-  //                   BottomNavigationBarItem(
-  //                     icon: Icon(
-  //                       Icons.chat,
-  //                       color: fontColor,
-  //                     ),
-  //                     label: 'Ask Archie',
-  //                   ),
-  //                 ],
-  //                 selectedItemColor: _getContrastingTextColor(
-  //                     currentColor ?? createMaterialColor(Colors.black)),
-  //                 unselectedItemColor: _getContrastingTextColor(
-  //                         currentColor ?? createMaterialColor(Colors.black))
-  //                     .withOpacity(0.6),
-  //                 showUnselectedLabels: true,
-  //               ),
-  //             )
-  //           : null, // No bottom bar if not logged in
-  //     ),
-  //   );
-  // }
 
   // Function to get a contrasting text color
   Color _getContrastingTextColor(MaterialColor backgroundColor) {

@@ -17,6 +17,40 @@ class FriendProvider with ChangeNotifier {
 
   }
 
+  Future<void> searchFriends(String query) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) return;
+    if (query.isEmpty) fetchSuggestedFriends();
+
+    isLoading = true;
+    notifyListeners();
+
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/friends/search?q=$query'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var responseBody = json.decode(response.body);
+      if (responseBody != null) {
+        suggestedFriends = (responseBody as List<dynamic>)
+            .map<Friend>((data) => Friend.fromJson(data))
+            .toList();
+      }
+    } else {
+      // Handle error response
+      print('Failed to search friends: ${response.body}');
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+
   Future<void> fetchFriends() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -24,7 +58,7 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends'),
+      Uri.parse('http://10.0.2.2:8080/friends'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -47,7 +81,7 @@ class FriendProvider with ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('http://billyrigdon.dev:8110/friends/suggested'),
+      Uri.parse('http://10.0.2.2:8080/friends/suggested'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -66,7 +100,7 @@ class FriendProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('http://billyrigdon.dev:8110/friends/$friendId'),
+      Uri.parse('http://10.0.2.2:8080/friends/$friendId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
