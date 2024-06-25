@@ -5,7 +5,7 @@ import 'package:TheWord/providers/verse_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-enum SearchType { BibleBooks, PublicVerses, SavedVerses, Friends, Settings }
+enum SearchType { BibleBooks, PublicVerses, SavedVerses, Friends, Settings, Profile }
 
 class DynamicSearchBar extends StatefulWidget {
   final SearchType searchType;
@@ -23,7 +23,7 @@ class DynamicSearchBar extends StatefulWidget {
 class _DynamicSearchBarState extends State<DynamicSearchBar> {
   Timer? _debounce;
 
-  void _filterMethod(context, filterString) {
+  void _filterMethod(context, filterString) async {
     if (widget.searchType == SearchType.BibleBooks) {
       Provider.of<BibleProvider>(context, listen: false)
           .filterBooks(filterString);
@@ -38,6 +38,11 @@ class _DynamicSearchBarState extends State<DynamicSearchBar> {
     }
     if (widget.searchType == SearchType.Friends) {
       Provider.of<FriendProvider>(context, listen: false).searchFriends(filterString);
+    }
+    if (widget.searchType == SearchType.Profile) {
+      await Provider.of<VerseProvider>(context, listen: false)
+          .searchSavedVerses(filterString, reset: true);
+      await Provider.of<FriendProvider>(context, listen: false).searchFriends(filterString);
     }
   }
 
@@ -66,6 +71,8 @@ class _DynamicSearchBarState extends State<DynamicSearchBar> {
         return 'Search Friends...';
       case SearchType.Settings:
         return 'Search Settings...';
+      case SearchType.Profile:
+        return 'Search...';
       default:
         return 'Search...';
     }
@@ -73,8 +80,7 @@ class _DynamicSearchBarState extends State<DynamicSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
+    return Container(
         margin: const EdgeInsets.symmetric(horizontal: 0),
         child: TextField(
           onTapOutside: (e) {
@@ -97,7 +103,7 @@ class _DynamicSearchBarState extends State<DynamicSearchBar> {
           },
           style: TextStyle(color: widget.fontColor, fontSize: 16),
         ),
-      ),
-    );
+      );
+
   }
 }

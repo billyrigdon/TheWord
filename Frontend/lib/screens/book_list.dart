@@ -338,6 +338,7 @@ class BookListScreen extends StatelessWidget {
               itemCount: bibleProvider.filteredBooks.length,
               itemBuilder: (context, index) {
                 String bookId = bibleProvider.filteredBooks[index]['id'];
+                String bookName = bibleProvider.filteredBooks[index]['name'];
                 return Card(
                   color: cardColor,
                   shape: RoundedRectangleBorder(
@@ -349,7 +350,7 @@ class BookListScreen extends StatelessWidget {
                     tilePadding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
                     title: Text(
-                      bibleProvider.filteredBooks[index]['name'],
+                      bookName,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
@@ -390,6 +391,7 @@ class BookListScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => ReaderScreen(
+                                      bookName: bookName,
                                       chapterId: chapter['id'],
                                       chapterName: 'Chapter ${chapter['number']}',
                                       chapterIds: bibleProvider.getChapters(bookId)!.map((c) => c['id']).toList(),

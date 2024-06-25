@@ -40,6 +40,8 @@ class FriendProvider with ChangeNotifier {
         suggestedFriends = (responseBody as List<dynamic>)
             .map<Friend>((data) => Friend.fromJson(data))
             .toList();
+      } else {
+        suggestedFriends = [];
       }
     } else {
       // Handle error response

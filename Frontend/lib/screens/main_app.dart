@@ -6,6 +6,7 @@ import 'package:TheWord/providers/notification_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
 import 'package:TheWord/screens/chat_screen.dart';
 import 'package:TheWord/screens/notification_screen.dart';
+import 'package:TheWord/screens/profile_screen.dart';
 import 'package:TheWord/screens/public_verses.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -87,9 +88,14 @@ class _MainAppScreenState extends State<MainAppScreen> {
       this.init();
     }
 
+    if (!settingsProvider.isLoggedIn && isInited) {
+      _timer?.cancel();
+      isInited = false;
+    }
+
     // Get current color from settings
     MaterialColor? currentColor = settingsProvider.currentColor;
-    Color? fontColor = Colors.white;
+    Color? fontColor = settingsProvider.currentThemeMode == ThemeMode.dark ? Colors.white : Colors.black;
     if (currentColor != null) {
       fontColor = settingsProvider.getFontColor(currentColor);
     }
@@ -98,8 +104,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
     List<Widget> _screens = [
       BookListScreen(),
       PublicVersesScreen(),
-      SavedVersesScreen(),
-      FriendListScreen(),
+      // SavedVersesScreen(),
+      NotificationScreen(),
       ChatScreen(),
     ];
 
@@ -109,7 +115,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
       },
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(72),
+          preferredSize: Size.fromHeight(60),
           child: AppBar(
             backgroundColor: currentColor,
             automaticallyImplyLeading: false,
@@ -156,84 +162,114 @@ class _MainAppScreenState extends State<MainAppScreen> {
                           ),
                         ),
                       if (_currentIndex == 2)
-                        Expanded(
+                        const Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(left: 14.0),
-                            child: SizedBox(
-                              height: 36,
-                              child: DynamicSearchBar(
-                                searchType: SearchType
-                                    .SavedVerses, // Choose the appropriate search type
-                                fontColor: fontColor,
+                            child: Center(
+                              child: SizedBox(
+                                height: 36,
+                                child: Center(
+                                  child: Text(
+                                    'Notifications',
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       if (_currentIndex == 3)
-                        Expanded(
+                        const Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(left: 14.0),
-                            child: SizedBox(
-                              height: 36,
-                              child: DynamicSearchBar(// Pass the dynamic data here
-                                searchType: SearchType
-                                    .Friends, // Choose the appropriate search type
-                                fontColor: fontColor,
+                            child: Center(
+                              child: SizedBox(
+                                height: 36,
+                                child: Center(
+                                  child: Text(
+                                    'Ask Archie',
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       // Spacer(), // Add another spacer for even spacing
-                      Row( children: [
-                      if (!settingsProvider.isLoggedIn)
-                        IconButton(
-                          color: fontColor,
-                          icon: const Icon(Icons.login),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LoginScreen()),
-                            );
-                          },
-                        ),
-                      if (!settingsProvider.isLoggedIn)
-                        IconButton(
-                          color: fontColor,
-                          icon: const Icon(Icons.app_registration),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => RegistrationScreen()),
-                            );
-                          },
-                        ),
-                      IconButton(
-                        color: fontColor,
-                        icon: const Icon(Icons.settings),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SettingsScreen()),
-                          );
-                        },
-                      ),
-                      if (settingsProvider.isLoggedIn)
-                        IconButton(
-                          color: fontColor,
-                          icon: const Icon(Icons.logout),
-                          onPressed: () {
-                            isInited = false;
-                            friendProvider.reset();
-                            settingsProvider.logout();
-                            _timer?.cancel();
-                            Provider.of<VerseProvider>(context, listen: false)
-                                .reset();
-                          },
-                        ),
-                      ],
+                      Row(
+                        children: [
+                          if (!settingsProvider.isLoggedIn)
+                            IconButton(
+                              color: fontColor,
+                              icon: const Icon(Icons.login),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => LoginScreen()),
+                                );
+                              },
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment
+                                  .center, // Aligns buttons centrally
+                              children: [
+                                if (settingsProvider.isLoggedIn)
+                                  SizedBox(
+                                    width:
+                                        30, // Set a small width for the button container
+                                    height:
+                                        40, // Optional: Set height if needed
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints:
+                                          BoxConstraints(), // Removes default constraints
+                                      color: fontColor,
+                                      icon: const Icon(Icons.person),
+                                      onPressed: () {
+                                        // isInited = false;
+                                        // friendProvider.reset();
+                                        // settingsProvider.logout();
+                                        // _timer?.cancel();
+                                        // Provider.of<VerseProvider>(context,
+                                        //     listen: false)
+                                        //     .reset();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ProfileScreen()),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                SizedBox(width: 4), // Very small spacing between buttons
+                                SizedBox(
+                                  width:
+                                      40, // Set a small width for the button container
+                                  height: 40, // Optional: Set height if needed
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints:
+                                        BoxConstraints(), // Removes default constraints
+                                    color: fontColor,
+                                    icon: const Icon(Icons.settings),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                SettingsScreen()),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
                       ),
                     ],
                   ),
@@ -276,19 +312,19 @@ class _MainAppScreenState extends State<MainAppScreen> {
                       ),
                       label: 'Explore',
                     ),
+                    // BottomNavigationBarItem(
+                    //   icon: Icon(
+                    //     Icons.home,
+                    //     color: fontColor,
+                    //   ),
+                    //   label: 'My Home',
+                    // ),
                     BottomNavigationBarItem(
                       icon: Icon(
-                        Icons.home,
+                        Icons.notifications,
                         color: fontColor,
                       ),
-                      label: 'My Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(
-                        Icons.group,
-                        color: fontColor,
-                      ),
-                      label: 'Friends',
+                      label: 'Notifications',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(
