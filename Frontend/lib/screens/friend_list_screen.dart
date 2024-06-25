@@ -28,7 +28,7 @@ class FriendListScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
-                'Suggested Users',
+                'Make new friends',
                 style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
               ),
             ),

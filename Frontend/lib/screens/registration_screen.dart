@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../providers/settings_provider.dart';
-import '../shared/widgets/bottom_bar.dart';
+import 'main_app.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -75,7 +75,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (loginSuccessful) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => BottomBarNavigation()),
+          MaterialPageRoute(builder: (context) => MainAppScreen()),
         );
       } else {
         Navigator.push(

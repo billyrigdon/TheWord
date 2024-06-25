@@ -1,11 +1,12 @@
 import 'package:TheWord/providers/settings_provider.dart';
 import 'package:TheWord/screens/registration_screen.dart';
-import 'package:TheWord/shared/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'main_app.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -37,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await Provider.of<SettingsProvider>(context, listen: false).loadSettings();
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => BottomBarNavigation()),
+        MaterialPageRoute(builder: (context) => MainAppScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

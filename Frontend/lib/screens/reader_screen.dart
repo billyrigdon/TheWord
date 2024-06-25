@@ -1,5 +1,9 @@
 import 'dart:convert';
+import 'package:TheWord/screens/saved_verses.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
@@ -9,19 +13,19 @@ import '../providers/settings_provider.dart';
 import '../services/chat_service.dart';
 import '../shared/widgets/highlight_text.dart';
 
-
 class ReaderScreen extends StatefulWidget {
   String chapterId;
   final String chapterName;
   final List<dynamic> chapterIds;
   final List<String> chapterNames;
+  final String bookName;
 
-  ReaderScreen({
-    required this.chapterId,
-    required this.chapterName,
-    required this.chapterIds,
-    required this.chapterNames,
-  });
+  ReaderScreen(
+      {required this.chapterId,
+      required this.chapterName,
+      required this.chapterIds,
+      required this.chapterNames,
+      required this.bookName});
 
   @override
   ReaderScreenState createState() => ReaderScreenState();
@@ -40,7 +44,8 @@ class ReaderScreenState extends State<ReaderScreen> {
   bool isPaused = false;
   bool isSkipping = false;
   ChatService chatService = ChatService(); // Initialize ChatService
-
+  int currentPageIndex = 0;
+  bool savedVersesActive = false;
   @override
   void initState() {
     super.initState();
@@ -94,7 +99,8 @@ class ReaderScreenState extends State<ReaderScreen> {
       if (item['name'] == 'para' && item['items'] is List) {
         for (var subItem in item['items']) {
           if (subItem['name'] == 'verse' && subItem['attrs'] is Map) {
-            String verseId = subItem['attrs']['sid'] ?? subItem['attrs']['verseId'] ?? '';
+            String verseId =
+                subItem['attrs']['sid'] ?? subItem['attrs']['verseId'] ?? '';
             String verseText = '';
 
             for (var textItem in subItem['items']) {
@@ -121,9 +127,10 @@ class ReaderScreenState extends State<ReaderScreen> {
     return verses;
   }
 
-  void _addOrUpdateVerse(List<Map<String, dynamic>> verses, String verseId, String verseText) {
+  void _addOrUpdateVerse(
+      List<Map<String, dynamic>> verses, String verseId, String verseText) {
     var existingVerse = verses.firstWhere(
-          (verse) => verse['id'] == verseId,
+      (verse) => verse['id'] == verseId,
       orElse: () => {},
     );
 
@@ -135,7 +142,8 @@ class ReaderScreenState extends State<ReaderScreen> {
   }
 
   Future<void> _fetchChapterContent(String chapterId) async {
-    var settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    var settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
     String translationId = settingsProvider.currentTranslationId!;
 
     setState(() {
@@ -150,8 +158,8 @@ class ReaderScreenState extends State<ReaderScreen> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      List<Map<String, dynamic>> parsedContent = parseBibleContent(
-          jsonEncode(data['data']['content']));
+      List<Map<String, dynamic>> parsedContent =
+          parseBibleContent(jsonEncode(data['data']['content']));
       List<Map<String, dynamic>> verses = extractVerses(parsedContent);
 
       setState(() {
@@ -167,7 +175,8 @@ class ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _startReading() async {
-    if (_chapterContents[widget.chapterId] != null && _chapterContents[widget.chapterId]!.isNotEmpty) {
+    if (_chapterContents[widget.chapterId] != null &&
+        _chapterContents[widget.chapterId]!.isNotEmpty) {
       setState(() {
         isReading = true;
         currentVerseIndex = 0;
@@ -200,7 +209,8 @@ class ReaderScreenState extends State<ReaderScreen> {
 
   bool _isNumeric(String str) {
     if (str.isEmpty) return false;
-    return double.tryParse(str) != null;  // Check if the string can be parsed as a number
+    return double.tryParse(str) !=
+        null; // Check if the string can be parsed as a number
   }
 
   void _safeReadNextVerse(int currentIndex) {
@@ -264,7 +274,6 @@ class ReaderScreenState extends State<ReaderScreen> {
         _pageController.jumpToPage(currentIndex + 1);
       });
       _readVerse(currentVerseIndex);
-
     } else {
       setState(() {
         isReading = false;
@@ -282,17 +291,55 @@ class ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
+  void _changePage(int direction) async {
+    if (direction == -1 && currentPageIndex > 0) {
+      currentPageIndex--;
+    } else if (direction == 1 &&
+        currentPageIndex < widget.chapterIds.length - 1) {
+      currentPageIndex++;
+    } else {
+      return; // Don't change page if it's out of range
+    }
+
+    final currentChapterId = widget.chapterIds[currentPageIndex];
+    final currentChapterName = widget.chapterNames[currentPageIndex];
+
+    if (isReading) {
+      flutterTts.stop();
+    }
+
+    setState(() {
+      widget.chapterId = currentChapterId;
+      chapterName = currentChapterName;
+      currentVerseIndex = 0;
+      // isLoading = true;
+    });
+
+    await _fetchChapterContent(currentChapterId);
+
+    setState(() {
+      isLoading = false;
+    });
+
+    _pageController.jumpToPage(currentPageIndex);
+
+    if (isReading) {
+      _resumeReading();
+    }
+  }
+
   void _summarizeContent({bool entireChapter = true}) async {
     setState(() {
       isSummaryLoading = true;
     });
 
     String content;
-      content = _chapterContents[widget.chapterId]!
-          .map((verse) => verse['text'])
-          .join(' ');
+    content = _chapterContents[widget.chapterId]!
+        .map((verse) => verse['text'])
+        .join(' ');
 
-    String summary = await chatService.getResponse("Summarize and provide context and interpretations for the following content: $content");
+    String summary = await chatService.getResponse(
+        "Summarize and provide context and interpretations for the following content: $content");
 
     setState(() {
       isSummaryLoading = false;
@@ -307,99 +354,206 @@ class ReaderScreenState extends State<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    String bookName = widget.bookName;
     return Scaffold(
       appBar: AppBar(
-        title: Text(chapterName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.summarize),
-            onPressed: () {
-              _summarizeContent(entireChapter: true);
-            },
-          ),
-          IconButton(
-            icon: Icon(isReading ? Icons.stop : Icons.play_arrow),
-            onPressed: () {
-              if (isReading) {
-                _pauseReading();
-              } else {
-                _startReading();
-              }
-            },
-          ),
-        ],
-      ),
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.chapterIds.length,
-                  onPageChanged: (index) {
-                    if (isReading) {
-                      flutterTts.stop();
-                    }
-                    final currentChapterId = widget.chapterIds[index];
-                    final currentChapterName = widget.chapterNames[index];
-                    _fetchChapterContent(currentChapterId);
-                    setState(() {
-                      widget.chapterId = currentChapterId;
-                      chapterName = currentChapterName;
-                      currentVerseIndex = 0;
-                    });
-                    if (isReading) {
-                      _resumeReading();
-                    }
-                  },
-                  itemBuilder: (context, index) {
-                    final chapterId = widget.chapterIds[index];
-                    return Center(
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SelectableTextHighlight(
-                          style: theme.textTheme.bodyMedium!.copyWith(fontSize: 16),
-                          verses: _chapterContents[chapterId] ?? [],
-                          currentVerseIndex: currentVerseIndex,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              if (isReading)
-                Container(
-                  color: Colors.grey[200],
+        automaticallyImplyLeading: !savedVersesActive,
+        toolbarTextStyle: TextStyle(
+            color: settingsProvider.currentThemeMode == ThemeMode.dark
+                ? Colors.white
+                : Colors.black),
+        toolbarHeight: 30,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        iconTheme: IconThemeData(
+            color: settingsProvider.currentThemeMode == ThemeMode.dark
+                ? Colors.white
+                : Colors.black),
+        actions: savedVersesActive
+            ? [
+                Expanded(
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.pause),
-                        onPressed: _pauseReading,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.skip_next),
-                        onPressed: _skipReading,
+                        iconSize: 24,
+                        padding: EdgeInsets.only(left:12),
+                        icon: const Icon(Icons.arrow_back,),
+                        onPressed: () {
+                          setState(() {
+                            savedVersesActive = false;
+                          });
+                        },
                       ),
                     ],
                   ),
+                )
+              ]
+            : [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 14.0),
+                    child: Center(
+                      child: SizedBox(
+                        height: 36,
+                        child: Center(
+                          child: Text(
+                            bookName,
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-            ],
-          ),
-          if (isSummaryLoading)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ],
+                IconButton(
+                  color: settingsProvider.currentThemeMode == ThemeMode.dark
+                      ? Colors.white
+                      : Colors.black,
+                  icon: Icon(isReading ? Icons.stop : Icons.play_arrow),
+                  onPressed: () {
+                    if (isReading) {
+                      _pauseReading();
+                    } else {
+                      _startReading();
+                    }
+                  },
+                ),
+              ],
       ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: savedVersesActive
+          ? SavedVersesScreen()
+          : Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: widget.chapterIds.length,
+                        onPageChanged: (index) {
+                          if (isReading) {
+                            flutterTts.stop();
+                          }
+                          final currentChapterId = widget.chapterIds[index];
+                          final currentChapterName = widget.chapterNames[index];
+                          _fetchChapterContent(currentChapterId);
+                          setState(() {
+                            widget.chapterId = currentChapterId;
+                            chapterName = currentChapterName;
+                            currentVerseIndex = 0;
+                            currentPageIndex = index;
+                          });
+                          if (isReading) {
+                            _resumeReading();
+                          }
+                        },
+                        itemBuilder: (context, index) {
+                          final chapterId = widget.chapterIds[index];
+                          return Center(
+                            child: isLoading
+                                ? const CircularProgressIndicator()
+                                : Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: SelectableTextHighlight(
+                                      style: theme.textTheme.bodyMedium!
+                                          .copyWith(fontSize: 16),
+                                      verses: _chapterContents[chapterId] ?? [],
+                                      currentVerseIndex: currentVerseIndex,
+                                    ),
+                                  ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (isReading)
+                      Container(
+                        color: Colors.grey[200],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.pause),
+                              onPressed: _pauseReading,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.skip_next),
+                              onPressed: _skipReading,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                if (isSummaryLoading)
+                  Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              ],
+            ),
+      bottomNavigationBar: !savedVersesActive
+          ? BottomAppBar(
+              padding: EdgeInsets.zero,
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.bookmark),
+                        onPressed: () {
+                          setState(() {
+                            savedVersesActive = !savedVersesActive;
+                          });
+                        },
+                        tooltip: 'Saved',
+                      ),
+                      Text('Saved', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_circle_left,
+                      size: 40, // Slightly larger icon
+                    ),
+                    onPressed: () {
+                      _changePage(-1); // Move to the previous page
+                    },
+                  ),
+                  Text(chapterName, style: TextStyle(fontSize: 16)),
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_circle_right,
+                      size: 40, // Slightly larger icon
+                    ),
+                    onPressed: () {
+                      _changePage(1); // Move to the next page
+                    },
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.summarize),
+                        onPressed: () {
+                          _summarizeContent();
+                        },
+                        tooltip: 'Summarize',
+                      ),
+                      Text('Summarize', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            )
+          : null,
     );
   }
 }
@@ -428,4 +582,3 @@ class SummaryModal extends StatelessWidget {
     );
   }
 }
-

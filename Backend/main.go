@@ -146,6 +146,7 @@ func main() {
 	r.GET("/verses/public", authMiddleware, getPublicVerses)
 	r.POST("/verses/save", authMiddleware, saveVerse)
 	r.GET("/verses/saved", authMiddleware, getSavedVerses)
+	r.GET("/verses/saved/search", authMiddleware, searchSavedVerses)
 	r.PUT("/verses/:id", authMiddleware, updateVerse)
 	r.GET("/verse/:id/comments", authMiddleware, getComments)
 	r.GET("/verse/:id/likes", authMiddleware, getLikesCount)
@@ -154,12 +155,14 @@ func main() {
 	r.POST("/friends/:id", authMiddleware, addFriend)
 	r.DELETE("/friends/:id", authMiddleware, removeFriend)
 	r.GET("/friends", authMiddleware, listFriends)
+	r.GET("/friends/search", authMiddleware, searchFriends)
 	r.GET("/friends/requests", authMiddleware, listFriendRequests)
 	r.POST("/friends/requests/:id/respond", authMiddleware, respondFriendRequest)
 	r.POST("/verse/:id/publish", authMiddleware, publishVerse)
 	r.POST("/verse/:id/unpublish", authMiddleware, unpublishVerse)
 	r.GET("/commentRequests", authMiddleware, getCommentRequests)
 	r.DELETE("/notifications/comments/:id", authMiddleware, deleteCommentNotification)
+	r.GET("/verses/public/search", authMiddleware, searchPublicVerses)
 	r.Run()
 }
 
@@ -418,6 +421,70 @@ func listFriends(c *gin.Context) {
             (f.user_id = u.user_id AND f.friend_id = ? AND f.status = 'accepted')
         )
     `, userID, userID, userID, userID, userID, userID).Scan(&friends)
+
+	c.JSON(http.StatusOK, friends)
+}
+
+func searchFriends(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+	userIDUint := userID.(uint)
+
+	// Get the search query parameter
+	searchQuery := c.DefaultQuery("q", "")
+
+	var excludedUserIDs []uint
+
+	// Retrieve all related user IDs to exclude (accepted, requested, or rejected)
+	db.Raw(`
+        SELECT DISTINCT user_id 
+        FROM (
+            SELECT friend_id AS user_id 
+            FROM friends 
+            WHERE user_id = ? AND status IN ('accepted', 'requested', 'rejected')
+            UNION
+            SELECT user_id 
+            FROM friends 
+            WHERE friend_id = ? AND status IN ('accepted', 'requested', 'rejected')
+        ) AS related_users
+    `, userIDUint, userIDUint).Scan(&excludedUserIDs)
+
+	// Add the current user ID to the exclusion list
+	excludedUserIDs = append(excludedUserIDs, userIDUint)
+
+	var friends []struct {
+		UserID          uint   `json:"user_id"`
+		Username        string `json:"username"`
+		PublicProfile   bool   `json:"public_profile"`
+		PrimaryColor    int    `json:"primary_color"`
+		HighlightColor  int    `json:"highlight_color"`
+		DarkMode        bool   `json:"dark_mode"`
+		TranslationId   string `json:"translation_id"`
+		TranslationName string `json:"translation_name"`
+	}
+
+	// Modify the query to include search conditions and exclude specific users
+	db.Raw(`
+        SELECT 
+            u.user_id, 
+            u.username, 
+            u.public_profile, 
+            u.primary_color, 
+            u.highlight_color, 
+            u.dark_mode, 
+            u.translation_id, 
+            u.translation_name
+        FROM users u
+        WHERE (
+            u.username ILIKE ? OR 
+            CAST(u.user_id AS TEXT) ILIKE ?
+        ) AND u.user_id NOT IN (
+            SELECT unnest(?::int[])
+        )
+    `, "%"+searchQuery+"%", "%"+searchQuery+"%", pq.Array(excludedUserIDs)).Scan(&friends)
 
 	c.JSON(http.StatusOK, friends)
 }
@@ -685,6 +752,95 @@ func loginUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
+func searchSavedVerses(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("pageSize", "10")
+	searchQuery := c.DefaultQuery("q", "") // Get the search query parameter
+
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		pageInt = 1
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		pageSizeInt = 10
+	}
+
+	var verses []UserVerse
+	offset := (pageInt - 1) * pageSizeInt
+
+	// Modify the query to include search conditions for verse_id, content, and note
+	query := db.Select("user_verse_id, verse_id, content, note, is_published").
+		Where("user_id = ?", userID).
+		Offset(offset).Limit(pageSizeInt)
+
+	if searchQuery != "" {
+		// Apply the search filter
+		searchString := "%" + searchQuery + "%"
+		query = query.Where("CAST(verse_id AS CHAR) LIKE ? OR content LIKE ? OR note LIKE ?", searchString, searchString, searchString)
+	}
+
+	if err := query.Find(&verses).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, verses)
+}
+
+func searchPublicVerses(c *gin.Context) {
+	userID := c.MustGet("userID").(uint) // Get current user ID
+	searchQuery := c.Query("q")          // Get the search query
+
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("pageSize", "10")
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		pageInt = 1
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		pageSizeInt = 10
+	}
+
+	var verses []struct {
+		UserVerse
+		Username string `json:"username"`
+	}
+
+	offset := (pageInt - 1) * pageSizeInt
+
+	// Modify the query to include search conditions for VerseID, Content, and Note
+	err = db.Raw(`
+		SELECT uv.*, u.username 
+		FROM user_verses uv
+		JOIN users u ON u.user_id = uv.user_id
+		LEFT JOIN friends f ON (
+			(f.user_id = u.user_id AND f.friend_id = ?) OR 
+			(f.friend_id = u.user_id AND f.user_id = ?)
+		)
+		WHERE uv.is_published = true AND (
+			u.user_id = ? OR 
+			u.public_profile = true OR 
+			f.status = 'accepted'
+		) AND (
+			CAST(uv.user_verse_id AS CHAR) LIKE ? OR 
+			uv.content LIKE ? OR 
+			uv.note LIKE ?
+		)
+		ORDER BY uv.user_verse_id DESC
+		LIMIT ? OFFSET ?
+	`, userID, userID, userID, "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%", pageSizeInt, offset).Scan(&verses).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to search verses: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, verses)
 }
 
 func getPublicVerses(c *gin.Context) {

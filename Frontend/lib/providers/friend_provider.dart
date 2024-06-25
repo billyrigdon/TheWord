@@ -17,6 +17,42 @@ class FriendProvider with ChangeNotifier {
 
   }
 
+  Future<void> searchFriends(String query) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) return;
+    if (query.isEmpty) fetchSuggestedFriends();
+
+    isLoading = true;
+    notifyListeners();
+
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/friends/search?q=$query'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var responseBody = json.decode(response.body);
+      if (responseBody != null) {
+        suggestedFriends = (responseBody as List<dynamic>)
+            .map<Friend>((data) => Friend.fromJson(data))
+            .toList();
+      } else {
+        suggestedFriends = [];
+      }
+    } else {
+      // Handle error response
+      print('Failed to search friends: ${response.body}');
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+
   Future<void> fetchFriends() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');

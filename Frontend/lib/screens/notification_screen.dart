@@ -1,4 +1,5 @@
 import 'package:TheWord/providers/bible_provider.dart';
+import 'package:TheWord/providers/friend_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,11 +11,8 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notificationProvider = Provider.of<NotificationProvider>(context);
-
+    final friendsProvider = Provider.of<FriendProvider>(context, listen: false);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-      ),
       body: notificationProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : notificationProvider.friendRequests.isEmpty &&
@@ -61,6 +59,7 @@ class NotificationScreen extends StatelessWidget {
                                   await notificationProvider
                                       .respondFriendRequest(
                                       request.userID, accept: true);
+                                  friendsProvider.fetchFriends();
                                 },
                               ),
                               IconButton(
@@ -70,12 +69,14 @@ class NotificationScreen extends StatelessWidget {
                                   await notificationProvider
                                       .respondFriendRequest(
                                       request.userID, accept: false);
+                                  await friendsProvider.fetchFriends();
                                 },
                               ),
                             ],
                             onDelete: () async {
                               await notificationProvider
                                   .respondFriendRequest(request.userID, accept: false);
+                              await friendsProvider.fetchFriends();
                             },
                           );
                         }).toList(),

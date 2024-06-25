@@ -4,7 +4,7 @@ import 'package:TheWord/providers/friend_provider.dart';
 import 'package:TheWord/providers/notification_provider.dart';
 import 'package:TheWord/providers/settings_provider.dart';
 import 'package:TheWord/providers/verse_provider.dart';
-import 'package:TheWord/shared/widgets/bottom_bar.dart';
+import 'package:TheWord/screens/main_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -89,7 +89,7 @@ class TheWordApp extends StatelessWidget {
               iconColor: Colors.black,
             ),
           ),
-          home: BottomBarNavigation(),
+          home: MainAppScreen(),
         );
       },
     );

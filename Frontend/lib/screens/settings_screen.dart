@@ -105,7 +105,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: EasyAutocomplete(
                   controller: _searchController,
-
                   decoration: const InputDecoration(
                     hintText: 'Search Translations',
                     suffixIcon: Icon(Icons.search),
@@ -119,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _filterTranslations();
                   },
                   onSubmitted: (String selection) {
+                    FocusManager.instance.primaryFocus?.unfocus();
                     var selectedTranslation = bibleProvider.translations.firstWhere(
                             (translation) =>
                         '${translation['name']} (${translation['language']['name']})' == selection);
